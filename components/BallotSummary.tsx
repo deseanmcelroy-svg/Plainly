@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { LocationBallot } from '@/lib/types';
 
 interface BallotSummaryProps {
@@ -38,6 +39,12 @@ export default function BallotSummary({ ballot }: BallotSummaryProps) {
           <Stat num={levels} label="Levels of government" />
           <Stat num={eventsCount} label="Key dates" />
         </div>
+        <Link
+          href="/leadership"
+          className="mt-6 inline-block text-sm text-terracotta underline"
+        >
+          Not sure who does what? See what each role means →
+        </Link>
       </div>
     </div>
   );

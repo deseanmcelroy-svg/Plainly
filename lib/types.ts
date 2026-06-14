@@ -54,3 +54,42 @@ export interface LocationBallot {
    */
   source: 'live' | 'sample';
 }
+
+// ===========================================================================
+// Government role explanations
+//
+// Rather than naming individual officeholders (which change often and are
+// hard to verify reliably without a paid API), this section explains what
+// each role does, how someone gets elected to it, and how long they serve —
+// information that's stable and doesn't need to be kept in sync with who's
+// currently in office.
+// ===========================================================================
+
+export interface GovernmentRole {
+  id: string;
+  level: GovernmentLevel;
+  icon: string;
+  title: string;
+  /** Short context line, e.g. "Federal · Elected · 6-year term" */
+  tag: string;
+  /** One-sentence plain-language summary */
+  summary: string;
+  /** Longer plain-language explanation shown when expanded */
+  full: string;
+  /**
+   * Current officeholder name(s), if stable enough to maintain manually.
+   * Only set for roles that change rarely (e.g. President, VP) — leave
+   * unset for roles where this would require ongoing upkeep.
+   */
+  currentHolder?: string;
+  /** Link to an official tool for finding who currently holds this specific role */
+  lookupUrl?: string;
+  lookupLabel?: string;
+}
+
+export interface GovernmentRoleSection {
+  level: GovernmentLevel;
+  heading: string;
+  description: string;
+  roles: GovernmentRole[];
+}
