@@ -9,6 +9,7 @@ export default function BallotSummary({ ballot }: BallotSummaryProps) {
   const localCount = ballot.ballotItems.length;
   const eventsCount = ballot.calendarEvents.length;
   const levels = new Set(ballot.ballotItems.map((item) => item.level)).size;
+  const localIssuesCount = ballot.ballotItems.filter((item) => item.level === 'local').length;
 
   const daysToElection = Math.max(
     0,
@@ -39,12 +40,22 @@ export default function BallotSummary({ ballot }: BallotSummaryProps) {
           <Stat num={levels} label="Levels of government" />
           <Stat num={eventsCount} label="Key dates" />
         </div>
-        <Link
-          href="/leadership"
-          className="mt-6 inline-block text-sm text-terracotta underline"
-        >
-          Not sure who does what? See what each role means →
-        </Link>
+        {localIssuesCount > 0 && (
+          <a
+            href="/#races-local"
+            className="mt-6 inline-block rounded-full bg-green/15 px-4 py-2 text-sm font-semibold text-green"
+          >
+            {localIssuesCount} local issue{localIssuesCount === 1 ? '' : 's'} on your ballot — see what they mean →
+          </a>
+        )}
+        <div>
+          <Link
+            href="/leadership"
+            className="mt-3 inline-block text-sm text-terracotta underline"
+          >
+            Not sure who does what? See what each role means →
+          </Link>
+        </div>
       </div>
     </div>
   );

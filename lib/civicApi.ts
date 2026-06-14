@@ -1,4 +1,5 @@
 import { BallotItem, CalendarEvent, GovernmentLevel, LocationBallot } from './types';
+import { buildVoteMeaning, simplifyMeasureText, summarizeMeasureText } from './plainLanguage';
 
 // ===========================================================================
 // Google Civic Information API integration
@@ -137,13 +138,39 @@ function contestToBallotItem(contest: CivicContest, index: number): BallotItem {
     ? contest.referendumTitle || 'Ballot Measure'
     : contest.office || 'Race';
 
-  const summary = isReferendum
-    ? contest.referendumSubtitle || contest.referendumBrief || 'A ballot measure for voters to decide.'
-    : `Represents ${contest.district?.name ?? 'your area'}.`;
+  if (isReferendum) {
+    const rawSummary = contest.referendumSubtitle || contest.referendumBrief;
+    const summary =
+      summarizeMeasureText(rawSummary) ??
+      summarizeMeasureText(contest.referendumText) ??
+      'A ballot measure for voters to decide.';
 
-  const full = isReferendum
-    ? contest.referendumText || contest.referendumBrief || summary
-    : `Office: ${contest.office ?? 'N/A'}${contest.district?.name ? ` — ${contest.district.name}` : ''}.`;
+    const full =
+      simplifyMeasureText(contest.referendumBrief) ??
+      simplifyMeasureText(contest.referendumText) ??
+      summary;
+
+    const voteMeaning = buildVoteMeaning(
+      title,
+      contest.referendumSubtitle,
+      contest.referendumBrief ?? contest.referendumText
+    );
+
+    return {
+      id: `contest-${index}`,
+      level,
+      icon: pickIcon(contest, level),
+      title,
+      tag: buildTag(level, contest),
+      summary,
+      full,
+      voteMeaning,
+      sourceText: contest.referendumText,
+    };
+  }
+
+  const summary = `Represents ${contest.district?.name ?? 'your area'}.`;
+  const full = `Office: ${contest.office ?? 'N/A'}${contest.district?.name ? ` — ${contest.district.name}` : ''}.`;
 
   return {
     id: `contest-${index}`,

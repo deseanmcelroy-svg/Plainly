@@ -79,7 +79,11 @@ export const SAMPLE_BALLOT: LocationBallot = {
       title: 'School Funding Renewal',
       tag: 'My community · Ballot measure',
       summary: 'A vote on whether to keep funding local schools at current levels.',
-      full: 'Renews an existing tax that pays for school staff and supplies. Voting yes keeps funding the same — it does not raise your taxes. Voting no would create a budget gap for local schools.',
+      full: 'Renews an existing tax that pays for school staff and supplies. This does not raise your taxes — it keeps the current rate going for several more years.',
+      voteMeaning: {
+        yes: 'The existing school tax continues at its current rate, maintaining current funding for staff and supplies.',
+        no: 'The tax expires, creating a budget gap that the district would need to fill some other way (e.g. cuts or a future ballot measure).',
+      },
     },
     {
       id: 'zoning-update',
@@ -89,6 +93,10 @@ export const SAMPLE_BALLOT: LocationBallot = {
       tag: 'My community · Ballot measure',
       summary: 'Changes what types of homes can be built in your area.',
       full: 'Allows smaller homes and backyard cottages in areas currently zoned for single-family houses only. Supporters say it adds housing options; opponents worry about density and parking.',
+      voteMeaning: {
+        yes: 'Smaller homes and backyard cottages become allowed in currently single-family-only zones.',
+        no: 'Current zoning stays the same — these smaller housing types remain restricted in those areas.',
+      },
     },
   ],
   calendarEvents: [

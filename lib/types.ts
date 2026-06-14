@@ -22,6 +22,10 @@ export interface BallotItem {
   summary: string;
   /** Longer plain-language explanation shown when expanded */
   full: string;
+  /** For ballot measures: what voting "yes" and "no" each do, in plain language */
+  voteMeaning?: { yes: string; no: string };
+  /** Original official text (e.g. full referendum text), shown separately from the paraphrase */
+  sourceText?: string;
   /** Optional list of candidates for races (omit for ballot measures) */
   candidates?: Candidate[];
 }

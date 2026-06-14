@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BallotItem, GovernmentLevel } from '@/lib/types';
+
+type Filter = 'all' | GovernmentLevel;
 
 interface RaceListProps {
   items: BallotItem[];
+  initialFilter?: Filter;
 }
-
-type Filter = 'all' | GovernmentLevel;
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'Everything' },
@@ -22,9 +23,22 @@ const ICON_BG: Record<GovernmentLevel, string> = {
   federal: 'bg-[#7d6fb3]/15',
 };
 
-export default function RaceList({ items }: RaceListProps) {
-  const [filter, setFilter] = useState<Filter>('all');
+export default function RaceList({ items, initialFilter = 'all' }: RaceListProps) {
+  const [filter, setFilter] = useState<Filter>(initialFilter);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  // Support linking directly to local issues, e.g. from the ballot summary's
+  // "Local issues" callout: /#races-local
+  useEffect(() => {
+    function checkHash() {
+      if (window.location.hash === '#races-local') {
+        setFilter('local');
+      }
+    }
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
+  }, []);
 
   function toggle(id: string) {
     setExpanded((prev) => {
@@ -42,6 +56,7 @@ export default function RaceList({ items }: RaceListProps) {
 
   return (
     <section id="races" className="mx-auto max-w-[1000px] px-[6vw] py-12">
+      <span id="races-local" className="block h-0 w-0" aria-hidden="true" />
       <div className="mb-9 text-center">
         <h2 className="font-display text-[clamp(1.8rem,3.5vw,2.4rem)] font-bold tracking-tight">
           What you&apos;ll see on Election Day
@@ -111,11 +126,43 @@ export default function RaceList({ items }: RaceListProps) {
                 <div className="mt-4 border-t border-line pt-4 text-base text-muted">
                   <div className="mb-2 font-semibold text-navy">{item.summary}</div>
                   {item.full}
+                  {item.voteMeaning && (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl bg-green/10 p-4">
+                        <div className="mb-1 text-sm font-bold uppercase tracking-wide text-green">
+                          If you vote YES
+                        </div>
+                        <div className="text-sm text-navy/90">{item.voteMeaning.yes}</div>
+                      </div>
+                      <div className="rounded-xl bg-terracotta/10 p-4">
+                        <div className="mb-1 text-sm font-bold uppercase tracking-wide text-terracotta">
+                          If you vote NO
+                        </div>
+                        <div className="text-sm text-navy/90">{item.voteMeaning.no}</div>
+                      </div>
+                    </div>
+                  )}
                   {item.candidates && item.candidates.length > 0 && (
                     <div className="mt-3 text-sm">
                       <span className="font-semibold text-navy">Candidates: </span>
                       {item.candidates.map((c) => c.name).join(', ')}
                     </div>
+                  )}
+                  {item.sourceText && (
+                    <details className="mt-4">
+                      <summary
+                        onClick={(e) => e.stopPropagation()}
+                        className="cursor-pointer text-sm font-semibold text-navy underline"
+                      >
+                        Read the official ballot text
+                      </summary>
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-2 whitespace-pre-wrap rounded-xl bg-cream p-4 text-sm text-muted"
+                      >
+                        {item.sourceText}
+                      </div>
+                    </details>
                   )}
                 </div>
               )}
