@@ -157,14 +157,14 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
         <MenuSection label="Settings">
           <ToggleRow icon="🌙" label="Dark mode" checked={darkMode} onChange={setDarkMode} />
           <MenuButton icon="🌐" label="Language" />
-          <MenuButton icon="🔒" label="Privacy" />
+          <MenuLink href="/privacy" icon="🔒" label="Privacy" onClick={onClose} chevron />
         </MenuSection>
 
         {/* Support */}
         <MenuSection label="Support" last>
-          <MenuButton icon="❓" label="Help & FAQ" />
+          <MenuLink href="/faq" icon="❓" label="Help & FAQ" onClick={onClose} chevron />
           <MenuButton icon="📣" label="Send feedback" />
-          <MenuButton icon="ℹ️" label="About Plainly" />
+          <MenuLink href="/about" icon="ℹ️" label="About Plainly" onClick={onClose} chevron />
         </MenuSection>
 
         <div className="px-[6vw] py-5 pb-8 text-center text-sm text-muted">
@@ -197,11 +197,13 @@ function MenuLink({
   icon,
   label,
   onClick,
+  chevron,
 }: {
   href: string;
   icon: string;
   label: string;
   onClick?: () => void;
+  chevron?: boolean;
 }) {
   return (
     <a
@@ -211,6 +213,7 @@ function MenuLink({
     >
       <span className="w-6 flex-shrink-0 text-center text-lg">{icon}</span>
       {label}
+      {chevron && <span className="ml-auto text-lg text-[#c5cdd2]">›</span>}
     </a>
   );
 }
