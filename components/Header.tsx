@@ -1,0 +1,29 @@
+'use client';
+
+import LogoMark from '@/components/LogoMark';
+
+interface HeaderProps {
+  onMenuOpen: () => void;
+  menuOpen: boolean;
+}
+
+export default function Header({ onMenuOpen, menuOpen }: HeaderProps) {
+  return (
+    <header className="flex items-center justify-between px-[6vw] py-6">
+      <div className="flex items-center gap-2.5 font-sans text-xl font-light tracking-wide">
+        <LogoMark />
+        Plainly
+      </div>
+      <button
+        onClick={onMenuOpen}
+        aria-label="Open menu"
+        aria-expanded={menuOpen}
+        className="flex h-[46px] w-[46px] flex-col items-center justify-center gap-[5px] rounded-xl border-2 border-navy bg-white transition-colors hover:bg-navy [&:hover_span]:bg-white"
+      >
+        <span className="block h-[2px] w-5 rounded-full bg-navy transition-colors" />
+        <span className="block h-[2px] w-5 rounded-full bg-navy transition-colors" />
+        <span className="block h-[2px] w-5 rounded-full bg-navy transition-colors" />
+      </button>
+    </header>
+  );
+}
