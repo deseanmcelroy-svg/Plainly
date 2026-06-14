@@ -26,6 +26,16 @@ export const metadata: Metadata = {
   title: 'Plainly — Politics Explained Plainly',
   description:
     'See what is on your ballot, get plain-language explanations of every race and measure, and get ready to vote.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Plainly',
+  },
+};
+
+export const viewport = {
+  themeColor: '#D9663E',
 };
 
 // Runs before React hydrates, so the correct theme class is applied
@@ -38,6 +48,19 @@ const themeInitScript = `
   } catch (e) {}
 `;
 
+// Registers the service worker for PWA installability and offline support.
+// Runs after the page loads so it doesn't compete with initial rendering.
+const swRegisterScript = `
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () {
+        // Service worker registration failing shouldn't break the app —
+        // it just means no offline/install support.
+      });
+    });
+  }
+`;
+
 export default function RootLayout({
   children,
 }: {
@@ -47,6 +70,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: swRegisterScript }} />
       </head>
       <body className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable} font-body`}>
         <ThemeProvider>

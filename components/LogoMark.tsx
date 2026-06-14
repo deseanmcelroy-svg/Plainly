@@ -3,7 +3,7 @@ interface LogoMarkProps {
   className?: string;
 }
 
-/** The Plainly icon mark: a flowing script "P" on a terracotta rounded square. */
+/** The Plainly icon mark: a looping script "P" with an inner swash, on a terracotta rounded square. */
 export default function LogoMark({ size = 30, className = '' }: LogoMarkProps) {
   return (
     <span
@@ -11,17 +11,26 @@ export default function LogoMark({ size = 30, className = '' }: LogoMarkProps) {
       style={{ width: size, height: size }}
     >
       <svg
-        width={size * 0.55}
-        height={size * 0.55}
+        width={size * 0.7}
+        height={size * 0.7}
         viewBox="0 0 512 512"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
         <path
-          d="M 195 130 C 195 110, 210 100, 235 103 C 300 110, 340 142, 340 182 C 340 222, 300 248, 243 242 C 222 240, 208 235, 199 230 L 199 410 C 199 432, 186 445, 164 447 C 154 448, 145 447, 140 445"
+          d="M 170 165 C 170 120, 210 90, 262 92 C 330 95, 378 145, 378 205 C 378 268, 328 312, 262 308 C 222 306, 192 290, 175 268"
           fill="none"
           stroke="#F7F4ED"
-          strokeWidth="30"
+          strokeWidth="24"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <ellipse cx="250" cy="222" rx="52" ry="24" fill="none" stroke="#F7F4ED" strokeWidth="24" />
+        <path
+          d="M 198 222 L 198 380 C 198 408, 180 423, 155 425 C 144 426, 134 424, 128 421"
+          fill="none"
+          stroke="#F7F4ED"
+          strokeWidth="24"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
