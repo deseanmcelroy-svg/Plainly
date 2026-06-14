@@ -54,12 +54,12 @@ export default function SignInForm() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
-        className="rounded-xl border-2 border-line bg-white px-4 py-3 text-base text-navy focus:border-terracotta focus:outline-none"
+        className="rounded-xl border-2 border-line bg-card px-4 py-3 text-base text-navy focus:border-terracotta focus:outline-none"
       />
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="rounded-xl bg-navy px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-navy/90 disabled:opacity-60"
+        className="rounded-xl bg-navy px-4 py-3 text-base font-semibold text-cream transition-colors hover:bg-navy/90 disabled:opacity-60"
       >
         {status === 'sending' ? 'Sending link…' : 'Email me a sign-in link'}
       </button>

@@ -75,14 +75,14 @@ export default function ElectionCalendar({ events }: ElectionCalendarProps) {
               <button
                 onClick={goPrev}
                 aria-label="Previous month"
-                className="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-line bg-white text-base transition-colors hover:border-navy"
+                className="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-line bg-card text-base transition-colors hover:border-navy"
               >
                 ‹
               </button>
               <button
                 onClick={goNext}
                 aria-label="Next month"
-                className="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-line bg-white text-base transition-colors hover:border-navy"
+                className="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-line bg-card text-base transition-colors hover:border-navy"
               >
                 ›
               </button>
@@ -154,7 +154,7 @@ export default function ElectionCalendar({ events }: ElectionCalendarProps) {
           <div className="flex flex-col gap-2.5">
             {listEvents.map((event, i) => (
               <div key={i} className="flex items-center gap-4 rounded-xl bg-cream p-3.5">
-                <div className="min-w-[54px] flex-shrink-0 rounded-[10px] border border-line bg-white px-3 py-2 text-center">
+                <div className="min-w-[54px] flex-shrink-0 rounded-[10px] border border-line bg-card px-3 py-2 text-center">
                   <div className="text-xs font-bold uppercase tracking-wide text-terracotta">
                     {MONTH_NAMES[event.dateObj.getMonth()].slice(0, 3)}
                   </div>

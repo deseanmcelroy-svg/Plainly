@@ -2,13 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-navy: 26 43 61;
+  --color-cream: 247 244 237;
+  --color-card: 255 255 255;
+  --color-muted: 93 107 120;
+  --color-line: 26 43 61;
+  --color-line-opacity: 0.08;
+}
+
+.dark {
+  --color-navy: 240 239 233;
+  --color-cream: 20 32 46;
+  --color-card: 30 45 64;
+  --color-muted: 154 169 182;
+  --color-line: 240 239 233;
+  --color-line-opacity: 0.1;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  background-color: #F7F4ED;
-  color: #1A2B3D;
+  background-color: rgb(var(--color-cream));
+  color: rgb(var(--color-navy));
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {

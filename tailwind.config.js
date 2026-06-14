@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -7,13 +8,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        navy: '#1A2B3D',
-        cream: '#F7F4ED',
-        terracotta: '#C75D3A',
+        navy: 'rgb(var(--color-navy) / <alpha-value>)',
+        cream: 'rgb(var(--color-cream) / <alpha-value>)',
+        terracotta: '#D9663E',
         green: '#5B8C7B',
-        card: '#FFFFFF',
-        muted: '#5D6B78',
-        line: 'rgba(26,43,61,0.08)',
+        card: 'rgb(var(--color-card) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
+        line: 'rgb(var(--color-line) / var(--color-line-opacity))',
       },
       fontFamily: {
         display: ['var(--font-fraunces)', 'serif'],

@@ -22,7 +22,7 @@ export default function SimplePage({ title, subtitle, children }: SimplePageProp
         </Link>
         <Link
           href="/"
-          className="rounded-xl border-2 border-navy px-4 py-2 text-sm font-medium transition-colors hover:bg-navy hover:text-white"
+          className="rounded-xl border-2 border-navy px-4 py-2 text-sm font-medium transition-colors hover:bg-navy hover:text-cream"
         >
           Back to app
         </Link>

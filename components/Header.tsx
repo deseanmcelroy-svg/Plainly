@@ -18,7 +18,7 @@ export default function Header({ onMenuOpen, menuOpen }: HeaderProps) {
         onClick={onMenuOpen}
         aria-label="Open menu"
         aria-expanded={menuOpen}
-        className="flex h-[46px] w-[46px] flex-col items-center justify-center gap-[5px] rounded-xl border-2 border-navy bg-white transition-colors hover:bg-navy [&:hover_span]:bg-white"
+        className="flex h-[46px] w-[46px] flex-col items-center justify-center gap-[5px] rounded-xl border-2 border-navy bg-card transition-colors hover:bg-navy [&:hover_span]:bg-cream"
       >
         <span className="block h-[2px] w-5 rounded-full bg-navy transition-colors" />
         <span className="block h-[2px] w-5 rounded-full bg-navy transition-colors" />

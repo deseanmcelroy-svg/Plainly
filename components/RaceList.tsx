@@ -58,8 +58,8 @@ export default function RaceList({ items }: RaceListProps) {
             onClick={() => setFilter(f.key)}
             className={`rounded-3xl border-2 px-5 py-2.5 text-sm font-semibold transition-colors ${
               filter === f.key
-                ? 'border-navy bg-navy text-white'
-                : 'border-line bg-white text-navy hover:border-navy'
+                ? 'border-navy bg-navy text-cream'
+                : 'border-line bg-card text-navy hover:border-navy'
             }`}
           >
             {f.label}
@@ -100,7 +100,7 @@ export default function RaceList({ items }: RaceListProps) {
                   </div>
                 </div>
                 <div
-                  className={`flex-shrink-0 text-2xl text-[#c5cdd2] transition-transform ${
+                  className={`flex-shrink-0 text-2xl text-muted/50 transition-transform ${
                     isOpen ? 'rotate-90 text-terracotta' : ''
                   }`}
                 >

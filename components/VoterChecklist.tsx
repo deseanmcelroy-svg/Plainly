@@ -42,7 +42,7 @@ export default function VoterChecklist() {
 
   return (
     <section id="vote" className="mx-auto max-w-[1000px] px-[6vw] py-12">
-      <div className="rounded-[20px] bg-navy px-7 py-11 text-center text-white sm:px-11">
+      <div className="rounded-[20px] bg-[#1A2B3D] px-7 py-11 text-center text-white sm:px-11">
         <h2 className="mb-2.5 font-display text-3xl font-bold">Ready to vote? Check these off.</h2>
         <p className="mx-auto mb-7 max-w-[480px] text-white/70">
           Most people who don&apos;t vote don&apos;t skip it on purpose — they just run out of time

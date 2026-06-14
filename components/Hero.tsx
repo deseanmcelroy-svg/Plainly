@@ -31,7 +31,7 @@ export default function Hero({ onSearch }: HeroProps) {
           onChange={(e) => setValue(e.target.value)}
           placeholder="Enter your city, address, or ZIP code"
           aria-label="Enter your city, address, or ZIP code"
-          className="w-full rounded-2xl border-2 border-navy bg-white px-5 py-[18px] text-center text-lg text-navy placeholder:text-[#9aa5ad] focus:border-terracotta focus:outline-none"
+          className="w-full rounded-2xl border-2 border-navy bg-card px-5 py-[18px] text-center text-lg text-navy placeholder:text-muted focus:border-terracotta focus:outline-none"
         />
         <button
           type="submit"
@@ -40,7 +40,7 @@ export default function Hero({ onSearch }: HeroProps) {
           Show me my ballot
         </button>
       </form>
-      <div className="mt-2.5 text-sm text-[#9aa5ad]">No sign-up needed. Just your location.</div>
+      <div className="mt-2.5 text-sm text-muted">No sign-up needed. Just your location.</div>
     </section>
   );
 }

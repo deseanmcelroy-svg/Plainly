@@ -50,7 +50,7 @@ export default function FaqAccordion({ items }: FaqAccordionProps) {
                 {item.question}
               </h3>
               <div
-                className={`flex-shrink-0 text-2xl text-[#c5cdd2] transition-transform ${
+                className={`flex-shrink-0 text-2xl text-muted/50 transition-transform ${
                   isOpen ? 'rotate-90 text-terracotta' : ''
                 }`}
               >

@@ -29,7 +29,7 @@ export default function Countdown({ targetDate }: CountdownProps) {
 
   return (
     <div className="reveal-enter flex justify-center px-[6vw] pb-12">
-      <div className="w-full max-w-[680px] rounded-[20px] bg-navy p-9 text-center text-white">
+      <div className="w-full max-w-[680px] rounded-[20px] bg-[#1A2B3D] p-9 text-center text-white">
         <div className="mb-1.5 font-mono text-xs uppercase tracking-widest text-green">
           Next election in
         </div>

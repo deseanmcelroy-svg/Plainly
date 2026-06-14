@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
+import { useTheme } from '@/lib/theme';
 import SignInForm from '@/components/auth/SignInForm';
 import LogoMark from '@/components/LogoMark';
 
@@ -18,7 +19,7 @@ interface ProfileData {
 
 export default function SlideMenu({ open, onClose }: SlideMenuProps) {
   const { user, loading, supabaseEnabled, signOut } = useAuth();
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, setDarkMode } = useTheme();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
 
@@ -51,7 +52,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
       {/* Overlay */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-[90] bg-navy/45 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[90] bg-black/45 transition-opacity duration-300 ${
           open ? 'visible opacity-100' : 'invisible opacity-0'
         }`}
         aria-hidden="true"
@@ -110,7 +111,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
                 <button
                   onClick={() => setShowSignIn(true)}
                   disabled={!supabaseEnabled}
-                  className="w-full rounded-xl bg-navy px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-navy/90 disabled:opacity-50"
+                  className="w-full rounded-xl bg-navy px-4 py-3 text-sm font-semibold text-cream transition-colors hover:bg-navy/90 disabled:opacity-50"
                 >
                   Sign in
                 </button>
@@ -213,7 +214,7 @@ function MenuLink({
     >
       <span className="w-6 flex-shrink-0 text-center text-lg">{icon}</span>
       {label}
-      {chevron && <span className="ml-auto text-lg text-[#c5cdd2]">›</span>}
+      {chevron && <span className="ml-auto text-lg text-muted/50">›</span>}
     </a>
   );
 }
@@ -223,7 +224,7 @@ function MenuButton({ icon, label }: { icon: string; label: string }) {
     <button className="-mx-3 flex w-[calc(100%+24px)] items-center gap-[14px] rounded-lg px-3 py-[14px] text-left text-base font-semibold text-navy transition-colors hover:bg-navy/5">
       <span className="w-6 flex-shrink-0 text-center text-lg">{icon}</span>
       {label}
-      <span className="ml-auto text-lg text-[#c5cdd2]">›</span>
+      <span className="ml-auto text-lg text-muted/50">›</span>
     </button>
   );
 }
@@ -252,7 +253,7 @@ function ToggleRow({
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
         />
-        <span className="switch-slider absolute inset-0 cursor-pointer rounded-full bg-[#d9dde1] transition-colors" />
+        <span className="switch-slider absolute inset-0 cursor-pointer rounded-full bg-navy/15 transition-colors" />
       </label>
     </div>
   );

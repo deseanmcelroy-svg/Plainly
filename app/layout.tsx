@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
+import { ThemeProvider } from '@/lib/theme';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -27,6 +28,16 @@ export const metadata: Metadata = {
     'See what is on your ballot, get plain-language explanations of every race and measure, and get ready to vote.',
 };
 
+// Runs before React hydrates, so the correct theme class is applied
+// immediately and there's no flash of the wrong theme on page load.
+const themeInitScript = `
+  try {
+    var saved = localStorage.getItem('plainly-theme');
+    var isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) document.documentElement.classList.add('dark');
+  } catch (e) {}
+`;
+
 export default function RootLayout({
   children,
 }: {
@@ -34,8 +45,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable} font-body`}>
-        <AuthProvider>{children}</AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
