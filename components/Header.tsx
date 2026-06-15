@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import LogoMark from '@/components/LogoMark';
 
 interface HeaderProps {
@@ -10,10 +11,10 @@ interface HeaderProps {
 export default function Header({ onMenuOpen, menuOpen }: HeaderProps) {
   return (
     <header className="flex items-center justify-between px-[6vw] py-6">
-      <div className="flex items-center gap-2.5 font-sans text-xl font-light tracking-wide">
+      <Link href="/" className="flex items-center gap-2.5 font-sans text-xl font-light tracking-wide">
         <LogoMark />
         Plainly
-      </div>
+      </Link>
       <button
         onClick={onMenuOpen}
         aria-label="Open menu"

@@ -129,6 +129,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
         <MenuSection label="Get around">
           <MenuLink href="/#races" icon="🗳️" label="My ballot" onClick={onClose} />
           <MenuLink href="/leadership" icon="🏛️" label="Who does what?" onClick={onClose} chevron />
+          <MenuLink href="/profile" icon="🏠" label="About your household" onClick={onClose} chevron />
           <MenuLink href="/#calendar" icon="📅" label="Election calendar" onClick={onClose} />
           <MenuLink href="/#how" icon="💬" label="How it works" onClick={onClose} />
           <MenuLink href="/#vote" icon="✅" label="Voter checklist" onClick={onClose} />

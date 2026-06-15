@@ -33,11 +33,45 @@ export default function PrivacyPage() {
         <li>The email address you sign in with</li>
         <li>A saved location, if you choose to save one, so you don't have to re-enter it</li>
         <li>Whether you've opted in to election reminder emails</li>
+        <li>
+          An optional household profile (see below), if you choose to fill
+          one out
+        </li>
       </ul>
       <p>
         This information is stored securely and is never shared with third
         parties, sold, or used for advertising.
       </p>
+
+      <h2 className="font-display text-2xl font-bold text-navy">Household profile (optional)</h2>
+      <p>
+        On the &quot;About your household&quot; page, you can optionally
+        tell Plainly broad ranges for your age, housing situation, home
+        value, household income, and whether you have school-age kids.
+        This is used only to show rough estimates of how local tax measures
+        and levies might affect a household like yours — for example,
+        &quot;this would cost about $40/year for a home in your value
+        range.&quot;
+      </p>
+      <ul className="list-disc space-y-2 pl-6">
+        <li>
+          Every field is optional, and you can clear any or all of them at
+          any time
+        </li>
+        <li>
+          Only broad ranges are collected (e.g. &quot;$150,000–$300,000&quot;),
+          never exact figures
+        </li>
+        <li>
+          If you&apos;re signed in, these ranges are saved to your account
+          so you don&apos;t have to re-enter them; if you&apos;re not signed
+          in, they apply only to your current session and aren&apos;t saved
+        </li>
+        <li>
+          This information is never used to suggest how to vote, never
+          shared with third parties, and never used for advertising
+        </li>
+      </ul>
 
       <h2 className="font-display text-2xl font-bold text-navy">Election reminder emails</h2>
       <p>

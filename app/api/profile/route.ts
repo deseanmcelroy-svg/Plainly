@@ -18,7 +18,9 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('saved_location, election_reminders_enabled, notify_email')
+    .select(
+      'saved_location, election_reminders_enabled, notify_email, age_range, housing_status, home_value_range, household_income_range, has_school_age_kids'
+    )
     .eq('id', userData.user.id)
     .single();
 
@@ -47,6 +49,30 @@ export async function PATCH(request: NextRequest) {
     updates.election_reminders_enabled = body.election_reminders_enabled;
   }
 
+  // Household profile fields — broad brackets only, all optional. Validate
+  // against the same allowed values as the database CHECK constraints so
+  // we return a clear error instead of a generic 500 on bad input.
+  const ageRanges = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+  const housingStatuses = ['rent', 'own'];
+  const homeValueRanges = ['under_150k', '150k_300k', '300k_500k', '500k_plus'];
+  const incomeRanges = ['under_40k', '40k_80k', '80k_120k', '120k_plus'];
+
+  if (body.age_range === null || ageRanges.includes(body.age_range)) {
+    updates.age_range = body.age_range;
+  }
+  if (body.housing_status === null || housingStatuses.includes(body.housing_status)) {
+    updates.housing_status = body.housing_status;
+  }
+  if (body.home_value_range === null || homeValueRanges.includes(body.home_value_range)) {
+    updates.home_value_range = body.home_value_range;
+  }
+  if (body.household_income_range === null || incomeRanges.includes(body.household_income_range)) {
+    updates.household_income_range = body.household_income_range;
+  }
+  if (typeof body.has_school_age_kids === 'boolean' || body.has_school_age_kids === null) {
+    updates.has_school_age_kids = body.has_school_age_kids;
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
@@ -55,7 +81,9 @@ export async function PATCH(request: NextRequest) {
     .from('profiles')
     .update(updates)
     .eq('id', userData.user.id)
-    .select('saved_location, election_reminders_enabled, notify_email')
+    .select(
+      'saved_location, election_reminders_enabled, notify_email, age_range, housing_status, home_value_range, household_income_range, has_school_age_kids'
+    )
     .single();
 
   if (error) {

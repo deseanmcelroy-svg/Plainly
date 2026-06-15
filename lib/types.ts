@@ -97,3 +97,33 @@ export interface GovernmentRoleSection {
   description: string;
   roles: GovernmentRole[];
 }
+
+// ===========================================================================
+// Household profile (optional, for impact estimates)
+//
+// All fields are broad brackets, not exact figures, and all are optional.
+// Used only to show estimated impacts of ballot measures (e.g. "this would
+// cost a household like yours about $X/year") — never required, never
+// used for anything else.
+// ===========================================================================
+
+export type AgeRange = '18-24' | '25-34' | '35-44' | '45-54' | '55-64' | '65+';
+export type HousingStatus = 'rent' | 'own';
+export type HomeValueRange = 'under_150k' | '150k_300k' | '300k_500k' | '500k_plus';
+export type IncomeRange = 'under_40k' | '40k_80k' | '80k_120k' | '120k_plus';
+
+export interface HouseholdProfile {
+  age_range: AgeRange | null;
+  housing_status: HousingStatus | null;
+  home_value_range: HomeValueRange | null;
+  household_income_range: IncomeRange | null;
+  has_school_age_kids: boolean | null;
+}
+
+/** Estimated dollar impact of a ballot measure for a given household profile. */
+export interface ImpactEstimate {
+  /** e.g. "About $45/year" */
+  amount: string;
+  /** Plain-language explanation of how the estimate was derived */
+  basis: string;
+}

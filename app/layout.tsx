@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from '@/lib/theme';
+import { HouseholdProfileProvider } from '@/lib/householdProfile';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -74,7 +75,9 @@ export default function RootLayout({
       </head>
       <body className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable} font-body`}>
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <HouseholdProfileProvider>{children}</HouseholdProfileProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

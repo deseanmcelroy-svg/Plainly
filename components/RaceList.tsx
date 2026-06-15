@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { BallotItem, GovernmentLevel } from '@/lib/types';
+import { useHouseholdProfile } from '@/lib/householdProfile';
+import { estimateImpact, hasProfileData } from '@/lib/impactEstimate';
 
 type Filter = 'all' | GovernmentLevel;
 
@@ -26,6 +29,8 @@ const ICON_BG: Record<GovernmentLevel, string> = {
 export default function RaceList({ items, initialFilter = 'all' }: RaceListProps) {
   const [filter, setFilter] = useState<Filter>(initialFilter);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const { profile, loaded: profileLoaded } = useHouseholdProfile();
+  const profileHasData = profileLoaded && hasProfileData(profile);
 
   // Support linking directly to local issues, e.g. from the ballot summary's
   // "Local issues" callout: /#races-local
@@ -140,6 +145,50 @@ export default function RaceList({ items, initialFilter = 'all' }: RaceListProps
                         </div>
                         <div className="text-sm text-navy/90">{item.voteMeaning.no}</div>
                       </div>
+                    </div>
+                  )}
+                  {profileHasData &&
+                    (() => {
+                      const impact = estimateImpact(item, profile);
+                      if (!impact) return null;
+                      return (
+                        <div className="mt-4 rounded-xl border border-line bg-cream p-4">
+                          <div className="mb-1 text-sm font-bold uppercase tracking-wide text-navy">
+                            What this could mean for you
+                          </div>
+                          <div className="text-lg font-bold text-terracotta">{impact.amount}</div>
+                          <div className="mt-1 text-sm text-muted">{impact.basis}</div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              try {
+                                sessionStorage.setItem(
+                                  `plainly-impact-${item.id}`,
+                                  JSON.stringify({ item, profile, impact })
+                                );
+                              } catch {
+                                // sessionStorage unavailable — link still
+                                // works, the detail page just won't have
+                                // pre-loaded data and will show a fallback.
+                              }
+                              window.location.href = `/impact/${item.id}`;
+                            }}
+                            className="mt-3 text-sm font-semibold text-terracotta underline"
+                          >
+                            Additional context →
+                          </button>
+                        </div>
+                      );
+                    })()}
+                  {!profileHasData && (item.level === 'local' || item.level === 'state') && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-4 rounded-xl border border-dashed border-line p-4 text-sm text-muted"
+                    >
+                      <Link href="/profile" className="text-terracotta underline">
+                        Tell us a bit about your household
+                      </Link>{' '}
+                      to see an estimate of what measures like this could mean for you.
                     </div>
                   )}
                   {item.candidates && item.candidates.length > 0 && (
