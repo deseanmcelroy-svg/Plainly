@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 const ITEMS = [
   {
     id: 'registered',
     label: 'Am I registered to vote?',
     sub: "Make sure you're signed up at your current address",
+    href: '/checklist/registration',
   },
   {
     id: 'polling-place',
@@ -49,29 +51,58 @@ export default function VoterChecklist() {
           to handle the logistics. Let&apos;s knock these out now.
         </p>
         <div className="mx-auto mb-7 grid max-w-[560px] gap-[14px] text-left sm:grid-cols-2">
-          {ITEMS.map((item) => (
-            <label
-              key={item.id}
-              htmlFor={item.id}
-              className="flex cursor-pointer items-start gap-[14px] rounded-xl bg-white/[0.06] px-5 py-[18px] transition-colors hover:bg-white/[0.12]"
-            >
-              <input
-                type="checkbox"
-                id={item.id}
-                checked={checked.has(item.id)}
-                onChange={() => toggle(item.id)}
-                className="mt-0.5 h-5 w-5 flex-shrink-0 accent-green"
-              />
-              <span>
-                <span className="block text-base font-semibold">{item.label}</span>
-                <span className="mt-1 block text-sm text-white/60">{item.sub}</span>
-              </span>
-            </label>
-          ))}
+          {ITEMS.map((item) => {
+            const content = (
+              <>
+                <input
+                  type="checkbox"
+                  id={item.id}
+                  checked={checked.has(item.id)}
+                  onChange={() => toggle(item.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-0.5 h-5 w-5 flex-shrink-0 accent-green"
+                />
+                <span>
+                  <span className="block text-base font-semibold">{item.label}</span>
+                  <span className="mt-1 block text-sm text-white/60">{item.sub}</span>
+                </span>
+                {item.href && (
+                  <span className="ml-auto self-center text-lg text-white/40">›</span>
+                )}
+              </>
+            );
+
+            if (item.href) {
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="flex items-start gap-[14px] rounded-xl bg-white/[0.06] px-5 py-[18px] transition-colors hover:bg-white/[0.12]"
+                >
+                  {content}
+                </Link>
+              );
+            }
+
+            return (
+              <label
+                key={item.id}
+                htmlFor={item.id}
+                className="flex cursor-pointer items-start gap-[14px] rounded-xl bg-white/[0.06] px-5 py-[18px] transition-colors hover:bg-white/[0.12]"
+              >
+                {content}
+              </label>
+            );
+          })}
         </div>
-        <button className="rounded-[14px] bg-terracotta px-8 py-4 text-base font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-[#d96b48]">
+        <a
+          href="https://vote.gov/register"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block rounded-[14px] bg-terracotta px-8 py-4 text-base font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-[#d96b48]"
+        >
           Check my registration
-        </button>
+        </a>
       </div>
     </section>
   );
