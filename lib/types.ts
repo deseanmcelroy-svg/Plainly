@@ -60,6 +60,32 @@ export interface LocationBallot {
 }
 
 // ===========================================================================
+// Polling locations
+// ===========================================================================
+
+export interface VoteSite {
+  name: string;
+  address: string;
+  hours?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface PollingInfo {
+  locationLabel: string;
+  electionName?: string;
+  electionDay?: string;
+  pollingLocations: VoteSite[];
+  earlyVoteSites: VoteSite[];
+  dropOffLocations: VoteSite[];
+  /** Link to the local election office's polling-place finder, if available */
+  finderUrl?: string;
+  /** "live" if real data was returned; "none" if no election data exists for this address */
+  source: 'live' | 'none';
+}
+
+
+// ===========================================================================
 // Government role explanations
 //
 // Rather than naming individual officeholders (which change often and are

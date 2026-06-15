@@ -1,4 +1,4 @@
-import { BallotItem, CalendarEvent, GovernmentLevel, LocationBallot } from './types';
+import { BallotItem, CalendarEvent, GovernmentLevel, LocationBallot, PollingInfo, VoteSite } from './types';
 import { buildVoteMeaning, simplifyMeasureText, summarizeMeasureText } from './plainLanguage';
 
 // ===========================================================================
@@ -306,6 +306,82 @@ function formatLocationLabel(addr?: CivicAddress, fallback?: string): string {
   if (!addr) return fallback ?? 'Your location';
   const cityState = [addr.city, addr.state].filter(Boolean).join(', ');
   return cityState || fallback || 'Your location';
+}
+
+/** Convert a Civic API vote site into our simplified VoteSite shape. */
+function toVoteSite(site: CivicVoteSite): VoteSite | null {
+  const addr = site.address;
+  if (!addr) return null;
+  const address = [addr.line1, addr.line2, addr.city, addr.state, addr.zip].filter(Boolean).join(', ');
+  if (!address) return null;
+  return {
+    name: site.name || addr.locationName || 'Voting location',
+    address,
+    hours: site.pollingHours,
+    startDate: site.startDate,
+    endDate: site.endDate,
+  };
+}
+
+/**
+ * Look up polling places, early voting sites, and ballot drop-off
+ * locations for an address.
+ *
+ * Like ballot data, this is only available from the Civic API when an
+ * election is active for the address — most of the year, this returns
+ * `source: 'none'` along with a finder link (if available) so the page can
+ * point users to their local election office instead.
+ *
+ * Returns `null` only if CIVIC_DATA_API_KEY is unset or the request fails
+ * outright (network error, bad response) — a request that succeeds but has
+ * no election data still returns a result with `source: 'none'`.
+ */
+export async function fetchPollingLocations(address: string): Promise<PollingInfo | null> {
+  const apiKey = process.env.CIVIC_DATA_API_KEY;
+  if (!apiKey || !address) return null;
+
+  const url = `${CIVIC_API_BASE}?key=${encodeURIComponent(apiKey)}&address=${encodeURIComponent(address)}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, { next: { revalidate: 3600 } });
+  } catch {
+    return null;
+  }
+
+  if (!res.ok) return null;
+
+  const data: CivicVoterInfoResponse = await res.json();
+  const locationLabel = formatLocationLabel(data.normalizedInput, address);
+  const adminBody = data.state?.[0]?.electionAdministrationBody;
+
+  const pollingLocations = (data.pollingLocations ?? []).map(toVoteSite).filter((s): s is VoteSite => s !== null);
+  const earlyVoteSites = (data.earlyVoteSites ?? []).map(toVoteSite).filter((s): s is VoteSite => s !== null);
+  const dropOffLocations = (data.dropOffLocations ?? []).map(toVoteSite).filter((s): s is VoteSite => s !== null);
+
+  const hasAnySites = pollingLocations.length || earlyVoteSites.length || dropOffLocations.length;
+
+  if (!data.election?.name && !hasAnySites) {
+    return {
+      locationLabel,
+      pollingLocations: [],
+      earlyVoteSites: [],
+      dropOffLocations: [],
+      finderUrl: adminBody?.votingLocationFinderUrl,
+      source: 'none',
+    };
+  }
+
+  return {
+    locationLabel,
+    electionName: data.election?.name,
+    electionDay: data.election?.electionDay,
+    pollingLocations,
+    earlyVoteSites,
+    dropOffLocations,
+    finderUrl: adminBody?.votingLocationFinderUrl,
+    source: 'live',
+  };
 }
 
 /**

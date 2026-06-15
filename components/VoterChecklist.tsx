@@ -14,6 +14,7 @@ const ITEMS = [
     id: 'polling-place',
     label: 'Where do I vote?',
     sub: 'Polling places can change — confirm yours',
+    href: '/checklist/polling-location',
   },
   {
     id: 'id',
