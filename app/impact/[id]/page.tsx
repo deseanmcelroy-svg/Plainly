@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { BallotItem, HouseholdProfile, ImpactEstimate } from '@/lib/types';
-import { buildAdditionalContext, buildHomeValueComparison } from '@/lib/impactEstimate';
+import { buildAdditionalContext, buildHomeValueComparison, buildPracticeImpactSynopsis } from '@/lib/impactEstimate';
 
 interface StoredImpact {
   item: BallotItem;
@@ -84,6 +84,7 @@ function DetailContent({
 }) {
   const additionalContext = buildAdditionalContext(item, profile);
   const comparison = buildHomeValueComparison(item);
+  const practiceImpact = buildPracticeImpactSynopsis(item, profile);
   const yourLabel = profile.home_value_range ? HOME_VALUE_LABELS[profile.home_value_range] : null;
 
   return (
@@ -115,7 +116,20 @@ function DetailContent({
       <div className="mt-6 rounded-2xl border border-line bg-cream p-6">
         <h2 className="font-display text-lg font-bold">What this could mean for your household</h2>
         <div className="mt-2 text-xl font-bold text-terracotta">{impact.amount}</div>
-        <p className="mt-2 text-base text-muted">{impact.basis}</p>
+
+        {practiceImpact ? (
+          <>
+            <p className="mt-2 text-base text-muted">{practiceImpact.synopsis}</p>
+            <div className="mt-4 rounded-xl bg-navy/5 p-4">
+              <div className="mb-1 text-sm font-bold uppercase tracking-wide text-navy/60">
+                Real-world example
+              </div>
+              <p className="text-sm text-muted">{practiceImpact.realWorldExample}</p>
+            </div>
+          </>
+        ) : (
+          <p className="mt-2 text-base text-muted">{impact.basis}</p>
+        )}
 
         {additionalContext.length > 0 && (
           <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">

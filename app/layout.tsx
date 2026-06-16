@@ -3,7 +3,6 @@ import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from '@/lib/theme';
 import { HouseholdProfileProvider } from '@/lib/householdProfile';
-import SplashScreen from '@/components/SplashScreen';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -78,7 +77,6 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <HouseholdProfileProvider>
-              <SplashScreen />
               {children}
             </HouseholdProfileProvider>
           </AuthProvider>
