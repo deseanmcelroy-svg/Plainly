@@ -219,8 +219,167 @@ export const EMPTY_PROFILE: HouseholdProfile = {
 };
 
 // ===========================================================================
-// Detailed impact page content
+// Practice ballot: issue-specific real-world synopsis
+//
+// Detects what a measure is actually funding/changing and produces a
+// plain-language synopsis tied to that specific issue, plus a real-world
+// example grounded in the user's household profile.
 // ===========================================================================
+
+/** Detect what a measure is primarily about from its text. */
+function detectMeasurePurpose(text: string): string {
+  const t = text.toLowerCase();
+  if (/school|classroom|teacher|student|education|district/.test(t)) return 'schools';
+  if (/road|street|pothole|pavement|highway|bridge|traffic/.test(t)) return 'roads';
+  if (/park|recreation|trail|greenspace|playground/.test(t)) return 'parks';
+  if (/police|sheriff|law enforcement|public safety|fire|emergency/.test(t)) return 'public safety';
+  if (/library|librari/.test(t)) return 'library';
+  if (/water|sewer|sanitation|utility/.test(t)) return 'utilities';
+  if (/transit|bus|rail|transportation/.test(t)) return 'transit';
+  if (/hospital|health|medical|clinic/.test(t)) return 'healthcare';
+  if (/senior|elder|aging/.test(t)) return 'senior services';
+  if (/affordable\s+housing|low.income\s+housing/.test(t)) return 'affordable housing';
+  if (/zon(e|ing)|land\s+use|rezon/.test(t)) return 'zoning';
+  if (/bond/.test(t)) return 'bond';
+  if (/charter/.test(t)) return 'charter';
+  return 'general';
+}
+
+/** Real-world example sentences by measure purpose + profile combination. */
+function buildRealWorldExample(
+  purpose: string,
+  profile: HouseholdProfile,
+  isRenewal: boolean,
+  isBond: boolean
+): string {
+  const hasKids = profile.has_school_age_kids === true;
+  const isOwner = profile.housing_status === 'own';
+  const isRenter = profile.housing_status === 'rent';
+
+  switch (purpose) {
+    case 'schools':
+      if (hasKids && isOwner)
+        return `For example: if this ${isRenewal ? 'renewal' : 'measure'} passes, the schools your kids attend could keep their current staffing and programs. If it fails, the district may need to cut electives, increase class sizes, or reduce extracurriculars to balance the budget.`;
+      if (hasKids)
+        return `For example: if this passes, the schools your kids attend maintain current funding levels. If it fails, expect potential cuts to programs, staffing, or supplies.`;
+      if (isOwner)
+        return `For example: well-funded local schools tend to support neighborhood property values. If this fails, budget cuts at local schools can affect the broader community — and sometimes home values — over time.`;
+      return `For example: if this passes, local schools keep their current funding for teachers, supplies, and programs. If it fails, the district typically has to make cuts somewhere to balance its budget.`;
+
+    case 'roads':
+      if (isOwner)
+        return `For example: think about a pothole-riddled street near your home, or a bridge that's been under repair for years. This kind of measure typically funds resurfacing, repairs, and maintenance that otherwise gets deferred indefinitely.`;
+      if (isRenter)
+        return `For example: this typically funds things like road resurfacing, pothole repairs, and sidewalk maintenance in your area — improvements you'd notice on your daily commute or walk.`;
+      return `For example: this kind of measure funds everyday road upkeep — filling potholes, repaving worn streets, and maintaining bridges in your area.`;
+
+    case 'parks':
+      if (hasKids)
+        return `For example: this could mean keeping your local playground equipment maintained, trails open, or recreation programs running — things your kids might use directly.`;
+      return `For example: this typically funds things like trail maintenance, park facilities, and recreation programming in your community — the kinds of spaces most people use regularly.`;
+
+    case 'public safety':
+      return `For example: this kind of measure typically funds things like additional officers or firefighters, updated equipment, or faster emergency response times. Most households don't notice this until they need 911 — and then it matters a lot.`;
+
+    case 'library':
+      if (hasKids)
+        return `For example: library funding often covers children's programs, summer reading, and after-school resources your kids might use — as well as digital resources and community meeting spaces.`;
+      return `For example: library levies typically fund hours of operation, digital access, programming, and staffing. Many libraries reduce hours or cut services when this funding lapses.`;
+
+    case 'utilities':
+      if (isOwner)
+        return `For example: water and sewer infrastructure improvements can affect your monthly utility bill and the reliability of service — aging pipes mean more main breaks and outages.`;
+      return `For example: utility measures typically address aging water mains, sewer upgrades, or treatment plant improvements that affect service reliability for everyone in the area.`;
+
+    case 'transit':
+      return `For example: this could affect bus frequency, route coverage, or fare prices in your area. Transit funding often determines whether a bus runs every 15 minutes or every hour.`;
+
+    case 'healthcare':
+      return `For example: community health measures often fund clinics, emergency services, or mental health programs that serve residents regardless of insurance status.`;
+
+    case 'senior services':
+      if ((profile.age_range === '55-64' || profile.age_range === '65+'))
+        return `For example: as someone in an older age bracket, this measure could directly affect services like meal delivery, transportation assistance, or senior center programs available to you.`;
+      return `For example: senior services measures typically fund meal delivery, transportation assistance, and community programs for older residents — often people's parents or neighbors.`;
+
+    case 'affordable housing':
+      if (isRenter)
+        return `For example: as a renter, affordable housing measures can affect the availability and cost of rental units in your area over time — more supply generally means more competition among landlords.`;
+      if (isOwner)
+        return `For example: as a homeowner, this affects who can afford to live in your community. More affordable housing options can help teachers, healthcare workers, and others who work locally but struggle with costs.`;
+      return `For example: affordable housing measures typically fund subsidized units, down-payment assistance, or zoning changes that allow more housing to be built at lower price points.`;
+
+    case 'zoning':
+      if (isOwner)
+        return `For example: if this rezoning passes, you might see new apartments, townhomes, or commercial buildings in areas that currently allow only single-family houses. For homeowners, this can mean more neighbors and activity nearby — which some see as improvement, others as unwanted density.`;
+      if (isRenter)
+        return `For example: if this rezoning passes, more housing could be built in your area, which over time tends to increase rental options and moderate prices. If it fails, current restrictions stay in place.`;
+      return `For example: zoning changes affect what can be built near you — denser housing, mixed-use buildings, or new commercial development. The long-term effect on your neighborhood depends on the specifics.`;
+
+    case 'bond':
+      if (isOwner)
+        return `For example: bond measures work like a community mortgage — the government borrows money now for a big project (like a new school building or road overhaul), and property owners pay it back gradually over 10–30 years through a small annual tax addition.`;
+      return `For example: bond measures let the government borrow money now for big projects and pay it back over time — like a mortgage, but for public infrastructure. The repayment comes from property taxes.`;
+
+    case 'charter':
+      return `For example: charter amendments change the rules of how your local government operates — things like term limits, how officials are elected, or how the budget process works. The effects are structural rather than immediate.`;
+
+    default:
+      if (isOwner)
+        return `For example: local measures like this often fund services you use but don't think about until they're cut — road repairs, parks, libraries, or community programs. As a homeowner, these also tend to affect the quality and desirability of your neighborhood over time.`;
+      return `For example: local measures typically fund community services that affect day-to-day life — things that often go unnoticed when funded but are quickly missed when they're cut.`;
+  }
+}
+
+/**
+ * Build a practice-ballot-specific impact synopsis: ties the estimate to
+ * the specific issue/policy the measure is about, and adds a real-world
+ * example grounded in the user's household profile.
+ *
+ * Returns { synopsis, realWorldExample } to be displayed separately in the
+ * practice ballot expanded card.
+ */
+export function buildPracticeImpactSynopsis(
+  item: BallotItem,
+  profile: HouseholdProfile
+): { synopsis: string; realWorldExample: string } | null {
+  const impact = estimateImpact(item, profile);
+  if (!impact) return null;
+
+  const text = [item.title, item.summary, item.full].filter(Boolean).join(' ');
+  const lower = text.toLowerCase();
+  const purpose = detectMeasurePurpose(lower);
+  const isRenewal = /renew|continu|extend/.test(lower) && /tax|levy/.test(lower);
+  const isBond = /bond/.test(lower);
+
+  const realWorldExample = buildRealWorldExample(purpose, profile, isRenewal, isBond);
+
+  // Build the synopsis by combining the impact amount with purpose-aware framing.
+  let synopsis = impact.basis;
+
+  // Prepend a purpose-specific opener so it's tied to the actual issue.
+  const purposeLabel: Record<string, string> = {
+    schools: 'This is a school funding measure',
+    roads: 'This funds road and infrastructure work',
+    parks: 'This funds parks and recreation',
+    'public safety': 'This funds public safety services',
+    library: 'This funds your local library',
+    utilities: 'This funds utility infrastructure',
+    transit: 'This funds public transit',
+    healthcare: 'This funds community health services',
+    'senior services': 'This funds senior services',
+    'affordable housing': 'This addresses affordable housing',
+    zoning: 'This is a zoning or land-use measure',
+    bond: 'This is a bond measure',
+    charter: 'This is a charter amendment',
+    general: 'This is a local measure',
+  };
+
+  const opener = purposeLabel[purpose] ?? 'This is a local measure';
+  synopsis = `${opener}. ${impact.basis}`;
+
+  return { synopsis, realWorldExample };
+}
 
 const HOME_VALUE_LABELS: Record<NonNullable<HouseholdProfile['home_value_range']>, string> = {
   under_150k: 'under $150,000',
