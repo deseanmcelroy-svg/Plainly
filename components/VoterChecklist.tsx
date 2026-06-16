@@ -20,6 +20,7 @@ const ITEMS = [
     id: 'id',
     label: 'What ID do I need?',
     sub: 'Requirements vary by state',
+    href: '/checklist/voter-id',
   },
   {
     id: 'method',
