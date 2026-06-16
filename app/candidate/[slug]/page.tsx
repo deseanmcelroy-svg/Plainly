@@ -139,7 +139,8 @@ function ProfileContent({ candidate }: { candidate: StoredCandidate }) {
             <div>
               <div className="text-base font-bold text-navy">Ballotpedia profile</div>
               <div className="mt-0.5 text-sm text-muted">
-                Nonpartisan background, voting record, and endorsements
+                Background, career history, key achievements, voting record,
+                and endorsements &mdash; written by a nonpartisan editorial team
               </div>
             </div>
             <span className="ml-4 flex-shrink-0 text-lg text-terracotta">&rarr;</span>

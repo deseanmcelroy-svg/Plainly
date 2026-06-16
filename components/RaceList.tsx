@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BallotItem, GovernmentLevel } from '@/lib/types';
 import { useHouseholdProfile } from '@/lib/householdProfile';
 import { estimateImpact, hasProfileData } from '@/lib/impactEstimate';
+import { detectRaceType } from '@/lib/howDecided';
 
 type Filter = 'all' | GovernmentLevel;
 
@@ -243,6 +244,18 @@ export default function RaceList({ items, initialFilter = 'all' }: RaceListProps
                       </div>
                     </details>
                   )}
+
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-4 border-t border-line pt-4"
+                  >
+                    <Link
+                      href={`/how-decided/${detectRaceType(item)}`}
+                      className="text-sm font-semibold text-terracotta hover:underline"
+                    >
+                      How does this get decided? &rarr;
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>
