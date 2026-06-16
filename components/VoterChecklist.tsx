@@ -26,6 +26,7 @@ const ITEMS = [
     id: 'method',
     label: 'How will I vote?',
     sub: 'By mail, early, or on Election Day — pick what works',
+    href: '/checklist/how-to-vote',
   },
 ];
 
