@@ -4,9 +4,11 @@ import LogoMark from '@/components/LogoMark';
 export default function Footer() {
   return (
     <footer className="px-[6vw] py-10 text-center text-sm text-muted">
-      <div className="mb-2 flex items-center justify-center gap-2.5 font-sans text-lg font-light tracking-wide">
-        <LogoMark />
-        Plainly
+      <div className="mb-2 flex items-center justify-center">
+        <Link href="/" className="flex items-center gap-2.5 font-sans text-lg font-light tracking-wide hover:text-navy">
+          <LogoMark />
+          Plainly
+        </Link>
       </div>
       <div className="mb-3 flex items-center justify-center gap-4">
         <Link href="/about" className="hover:text-navy hover:underline">
