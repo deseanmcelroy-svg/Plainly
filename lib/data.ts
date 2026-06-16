@@ -29,8 +29,8 @@ export const SAMPLE_BALLOT: LocationBallot = {
       summary: 'Represents your area in Congress and votes on national laws.',
       full: 'This person votes on things like the federal budget, healthcare policy, and national security. Replace with live candidate data.',
       candidates: [
-        { name: 'Candidate A' },
-        { name: 'Candidate B' },
+        { name: 'Candidate A', party: 'Democratic', office: 'U.S. House Representative', ballotpediaUrl: 'https://ballotpedia.org' },
+        { name: 'Candidate B', party: 'Republican', office: 'U.S. House Representative', ballotpediaUrl: 'https://ballotpedia.org' },
       ],
     },
     {
@@ -42,8 +42,8 @@ export const SAMPLE_BALLOT: LocationBallot = {
       summary: 'Leads your state government and can approve or block state laws.',
       full: 'The governor manages the state budget, oversees state agencies, and decides whether to sign or veto bills from the legislature.',
       candidates: [
-        { name: 'Candidate A' },
-        { name: 'Candidate B' },
+        { name: 'Candidate A', party: 'Democratic', office: 'Governor', ballotpediaUrl: 'https://ballotpedia.org' },
+        { name: 'Candidate B', party: 'Republican', office: 'Governor', ballotpediaUrl: 'https://ballotpedia.org' },
       ],
     },
     {
@@ -55,8 +55,8 @@ export const SAMPLE_BALLOT: LocationBallot = {
       summary: 'Represents your area in the state legislature.',
       full: 'Votes on state-level laws covering things like education funding, taxes, and infrastructure.',
       candidates: [
-        { name: 'Candidate A' },
-        { name: 'Candidate B' },
+        { name: 'Candidate A', party: 'Democratic', office: 'State Senate, District 28', ballotpediaUrl: 'https://ballotpedia.org' },
+        { name: 'Candidate B', party: 'Republican', office: 'State Senate, District 28', ballotpediaUrl: 'https://ballotpedia.org' },
       ],
     },
     {
@@ -68,8 +68,8 @@ export const SAMPLE_BALLOT: LocationBallot = {
       summary: 'Decides how your county spends money on roads, parks, and services.',
       full: 'Manages the county budget and oversees local departments like roads, parks, and emergency services.',
       candidates: [
-        { name: 'Candidate A' },
-        { name: 'Candidate B' },
+        { name: 'Candidate A', party: 'Democratic', office: 'County Commissioner', ballotpediaUrl: 'https://ballotpedia.org' },
+        { name: 'Candidate B', party: 'Republican', office: 'County Commissioner', ballotpediaUrl: 'https://ballotpedia.org' },
       ],
     },
     {

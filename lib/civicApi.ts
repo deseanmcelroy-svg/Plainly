@@ -42,6 +42,8 @@ interface CivicCandidate {
   name: string;
   party?: string;
   candidateUrl?: string;
+  photoUrl?: string;
+  channels?: { type: string; id: string }[];
 }
 
 interface CivicContest {
@@ -184,6 +186,10 @@ function contestToBallotItem(contest: CivicContest, index: number): BallotItem {
       name: c.name,
       party: c.party,
       infoUrl: c.candidateUrl,
+      photoUrl: c.photoUrl,
+      channels: c.channels,
+      office: contest.office,
+      ballotpediaUrl: `https://ballotpedia.org/wiki/index.php?search=${encodeURIComponent(c.name)}`,
     })),
   };
 }

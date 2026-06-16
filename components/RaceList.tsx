@@ -192,9 +192,39 @@ export default function RaceList({ items, initialFilter = 'all' }: RaceListProps
                     </div>
                   )}
                   {item.candidates && item.candidates.length > 0 && (
-                    <div className="mt-3 text-sm">
-                      <span className="font-semibold text-navy">Candidates: </span>
-                      {item.candidates.map((c) => c.name).join(', ')}
+                    <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+                      <div className="mb-2 text-sm font-bold uppercase tracking-wide text-navy">
+                        Candidates
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {item.candidates.map((c) => {
+                          const slug = encodeURIComponent(c.name.toLowerCase().replace(/\s+/g, '-'));
+                          return (
+                            <button
+                              key={c.name}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                try {
+                                  sessionStorage.setItem(
+                                    `plainly-candidate-${slug}`,
+                                    JSON.stringify({ ...c, raceTitle: item.title, raceTag: item.tag })
+                                  );
+                                } catch {}
+                                window.location.href = `/candidate/${slug}`;
+                              }}
+                              className="flex items-center justify-between rounded-xl border border-line bg-cream px-4 py-3 text-left transition-colors hover:border-navy hover:bg-card"
+                            >
+                              <span>
+                                <span className="block text-sm font-semibold text-navy">{c.name}</span>
+                                {c.party && (
+                                  <span className="text-xs text-muted">{c.party}</span>
+                                )}
+                              </span>
+                              <span className="text-sm text-terracotta">View profile ›</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                   {item.sourceText && (

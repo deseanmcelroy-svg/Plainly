@@ -30,11 +30,24 @@ export interface BallotItem {
   candidates?: Candidate[];
 }
 
+export interface CandidateChannel {
+  type: string; // e.g. "GooglePlus", "Twitter", "Facebook", "YouTube"
+  id: string;
+}
+
 export interface Candidate {
   name: string;
   party?: string;
-  /** Link to an official campaign site or nonpartisan candidate profile */
+  /** Link to an official campaign site */
   infoUrl?: string;
+  /** Photo URL from Civic API, if available */
+  photoUrl?: string;
+  /** Social media channels from Civic API */
+  channels?: CandidateChannel[];
+  /** The race/office this candidate is running for */
+  office?: string;
+  /** Ballotpedia search URL for this candidate */
+  ballotpediaUrl?: string;
 }
 
 export interface CalendarEvent {
