@@ -4,6 +4,7 @@ import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from '@/lib/theme';
 import { HouseholdProfileProvider } from '@/lib/householdProfile';
 import OnboardingModal from '@/components/OnboardingModal';
+import ElectionBanner from '@/components/ElectionBanner';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -79,6 +80,7 @@ export default function RootLayout({
           <AuthProvider>
             <HouseholdProfileProvider>
               <OnboardingModal />
+              <ElectionBanner />
               {children}
             </HouseholdProfileProvider>
           </AuthProvider>
