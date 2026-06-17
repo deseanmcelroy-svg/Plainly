@@ -14,7 +14,6 @@ import Footer from '@/components/Footer';
 import { LocationBallot } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import WaitlistForm, { isWaitlistDone } from '@/components/WaitlistForm';
-import BallotWaitlist from '@/components/BallotWaitlist';
 
 export default function Home() {
   const { user } = useAuth();
@@ -166,9 +165,6 @@ export default function Home() {
                           />
                         </div>
                       )}
-                      <div className="mt-4 border-t border-terracotta/20 pt-4">
-                        <BallotWaitlist location={ballot.locationLabel} compact />
-                      </div>
                     </div>
                   </div>
                 </div>
