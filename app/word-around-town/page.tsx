@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -32,6 +32,14 @@ const LEVEL_LABELS: Record<string, string> = {
 };
 
 export default function WordAroundTownPage() {
+  return (
+    <Suspense fallback={<div className="py-12 text-center text-muted">Loading&hellip;</div>}>
+      <WordAroundTownContent />
+    </Suspense>
+  );
+}
+
+function WordAroundTownContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
