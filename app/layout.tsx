@@ -3,6 +3,7 @@ import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from '@/lib/theme';
 import { HouseholdProfileProvider } from '@/lib/householdProfile';
+import OnboardingModal from '@/components/OnboardingModal';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -77,6 +78,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <HouseholdProfileProvider>
+              <OnboardingModal />
               {children}
             </HouseholdProfileProvider>
           </AuthProvider>
