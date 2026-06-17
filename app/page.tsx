@@ -170,9 +170,6 @@ export default function Home() {
                 </div>
               </div>
             )}
-            <div className="mx-auto max-w-[1000px] px-[6vw]">
-              <hr className="border-line/30" />
-            </div>
             <BallotSummary ballot={ballot} />
             <ElectionCalendar events={ballot.calendarEvents} />
             <Countdown targetDate={ballot.nextElectionDate} />
