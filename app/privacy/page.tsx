@@ -43,6 +43,29 @@ export default function PrivacyPage() {
         parties, sold, or used for advertising.
       </p>
 
+      <h2 className="font-display text-2xl font-bold text-navy">Community stats (anonymous)</h2>
+      <p>
+        When you complete a practice ballot and choose to share your
+        selections, Plainly stores your ballot choices anonymously to
+        power the &quot;Word around town&quot; community stats feature.
+        Specifically, we store:
+      </p>
+      <ul className="list-disc space-y-2 pl-6">
+        <li>Your ZIP code (normalized to 5 digits)</li>
+        <li>The ballot item ID and title</li>
+        <li>Your selection (YES/NO for measures, candidate name for races)</li>
+        <li>A timestamp</li>
+      </ul>
+      <p>
+        <strong>No user ID, name, email, or any identifying information
+        is stored with these submissions.</strong> They are fully
+        anonymous and cannot be traced back to you. This data is used
+        only to show aggregate percentages to other users in your area
+        (e.g. &quot;68% of Plainly users in your ZIP voted YES on this
+        measure&quot;). Community stats are never shown until at least 5
+        responses exist for a given item in a given area.
+      </p>
+
       <h2 className="font-display text-2xl font-bold text-navy">Household profile (optional)</h2>
       <p>
         On the &quot;About your household&quot; page, you can optionally

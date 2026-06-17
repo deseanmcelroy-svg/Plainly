@@ -12,10 +12,30 @@ import { BallotItem, HouseholdProfile, LocationBallot } from '@/lib/types';
 
 type Selections = Record<string, string>;
 
+interface CommunityBreakdown {
+  selection: string;
+  count: number;
+  percent: number;
+}
+
+interface CommunityStat {
+  itemId: string;
+  itemTitle: string;
+  itemLevel: string;
+  total: number;
+  hasEnoughData: boolean;
+  breakdown: CommunityBreakdown[];
+}
+
 const STORAGE_PREFIX = 'plainly-practice-';
+const SUBMITTED_KEY_PREFIX = 'plainly-practice-submitted-';
 
 function storageKey(location: string) {
   return `${STORAGE_PREFIX}${location.toLowerCase().replace(/\s+/g, '-')}`;
+}
+
+function submittedKey(location: string) {
+  return `${SUBMITTED_KEY_PREFIX}${location.toLowerCase().replace(/\s+/g, '-')}`;
 }
 
 export default function PracticeBallotPage() {
@@ -30,7 +50,10 @@ export default function PracticeBallotPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
-
+  const [communityStats, setCommunityStats] = useState<CommunityStat[]>([]);
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   useEffect(() => {
     if (!user) return;
     fetch('/api/profile')
@@ -48,16 +71,52 @@ export default function PracticeBallotPage() {
       const data: LocationBallot = await res.json();
       setBallot(data);
       setLocation(loc);
+      // Check if already submitted this location
       try {
         const saved = localStorage.getItem(storageKey(loc));
         setSelections(saved ? JSON.parse(saved) : {});
+        setAlreadySubmitted(!!localStorage.getItem(submittedKey(loc)));
       } catch {
         setSelections({});
+        setAlreadySubmitted(false);
       }
     } catch {
       setError("We couldn't load ballot data for that location. Try a full street address or ZIP code.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function submitToCommunity() {
+    if (!ballot || !location) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const votes = ballot.ballotItems
+        .filter((item) => selections[item.id])
+        .map((item) => ({
+          itemId: item.id,
+          itemTitle: item.title,
+          itemLevel: item.level,
+          selection: selections[item.id],
+        }));
+
+      const res = await fetch('/api/community-votes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location, votes }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      try { localStorage.setItem(submittedKey(location), '1'); } catch {}
+      setAlreadySubmitted(true);
+      // Redirect to word-around-town page with location
+      window.location.href = `/word-around-town?location=${encodeURIComponent(location)}`;
+    } catch {
+      setSubmitError("Couldn't submit right now \u2014 try again in a moment.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -78,8 +137,12 @@ export default function PracticeBallotPage() {
   function clearAll() {
     setSelections({});
     if (location) {
-      try { localStorage.removeItem(storageKey(location)); } catch {}
+      try {
+        localStorage.removeItem(storageKey(location));
+        localStorage.removeItem(submittedKey(location));
+      } catch {}
     }
+    setAlreadySubmitted(false);
   }
 
   const totalItems = ballot?.ballotItems.length ?? 0;
@@ -245,6 +308,48 @@ export default function PracticeBallotPage() {
                 >
                   Check your voter checklist &rarr;
                 </Link>
+              </div>
+            )}
+
+            {/* Community stats section */}
+            {allDone && (
+              <div className="mt-8 rounded-2xl border border-line bg-card p-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🏘️</span>
+                  <h2 className="font-display text-xl font-bold">Word around town</h2>
+                </div>
+                <p className="mt-2 text-sm text-muted">
+                  See how other Plainly users in your area are leaning on
+                  these issues. Completely anonymous &mdash; only your ZIP
+                  code and ballot selections are ever stored.
+                </p>
+
+                {!alreadySubmitted ? (
+                  <>
+                    <button
+                      onClick={submitToCommunity}
+                      disabled={submitting}
+                      className="mt-4 w-full rounded-xl bg-navy px-5 py-3 text-sm font-bold text-cream transition-all hover:-translate-y-0.5 disabled:opacity-50"
+                    >
+                      {submitting ? 'Sharing\u2026' : 'Share anonymously and see community results \u2192'}
+                    </button>
+                    {submitError && (
+                      <p className="mt-2 text-xs text-terracotta">{submitError}</p>
+                    )}
+                  </>
+                ) : (
+                  <div className="mt-4 flex flex-col gap-3">
+                    <div className="rounded-xl border border-green/20 bg-green/5 p-3 text-sm text-green">
+                      Your selections have been shared. Thanks for contributing!
+                    </div>
+                    <Link
+                      href={`/word-around-town?location=${encodeURIComponent(location)}`}
+                      className="text-center text-sm font-semibold text-terracotta underline"
+                    >
+                      View community results \u2192
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </>

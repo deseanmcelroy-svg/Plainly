@@ -87,3 +87,48 @@ drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile"
   on public.profiles for update
   using (auth.uid() = id);
+
+-- ===========================================================================
+-- Community votes
+--
+-- Anonymized practice ballot submissions used to show community stats
+-- (e.g. "68% of Plainly users in your area voted YES on the school levy").
+--
+-- NO personal data is stored here -- no user ID, no name, no email.
+-- Only: a normalized ZIP code, ballot item ID and title, the selection
+-- (yes/no for measures, candidate name for races), and a timestamp.
+--
+-- RLS: anyone can insert (anonymous) and select (to read aggregate stats).
+-- We never expose individual rows to users -- only aggregates via the API.
+--
+-- TO ADD THIS TABLE to an existing database, run:
+--   (just run the create table statement below -- no migration needed
+--    since this is a brand new table)
+-- ===========================================================================
+
+create table if not exists public.community_votes (
+  id bigint generated always as identity primary key,
+  zip text not null,
+  item_id text not null,
+  item_title text not null,
+  item_level text not null check (item_level in ('local', 'state', 'federal')),
+  selection text not null,
+  created_at timestamptz not null default now()
+);
+
+-- Index for fast aggregate queries by zip + item
+create index if not exists community_votes_zip_item
+  on public.community_votes (zip, item_id);
+
+-- RLS: open insert (anonymous submissions) and select (for aggregate stats)
+alter table public.community_votes enable row level security;
+
+drop policy if exists "Anyone can submit community votes" on public.community_votes;
+create policy "Anyone can submit community votes"
+  on public.community_votes for insert
+  with check (true);
+
+drop policy if exists "Anyone can read community votes" on public.community_votes;
+create policy "Anyone can read community votes"
+  on public.community_votes for select
+  using (true);
