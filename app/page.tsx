@@ -160,7 +160,7 @@ export default function Home() {
                       {!waitlistDone && (
                         <div className="mt-5 border-t border-terracotta/20 pt-4">
                           <WaitlistForm
-                            location={ballot.location}
+                            location={ballot.locationLabel}
                             prefillEmail={userEmail}
                             onDone={() => setWaitlistDone(true)}
                           />
