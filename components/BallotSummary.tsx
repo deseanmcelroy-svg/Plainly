@@ -30,9 +30,10 @@ export default function BallotSummary({ ballot }: BallotSummaryProps) {
           actually means.
         </p>
         {ballot.source === 'sample' && (
-          <p className="mt-3 inline-block rounded-full bg-cream px-4 py-1.5 text-sm text-muted">
-            Showing sample data — live election data isn&apos;t available for this address right now.
-          </p>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-terracotta/30 bg-terracotta/8 px-4 py-1.5 text-sm text-terracotta">
+            <span>⚠️</span>
+            Sample data &mdash; your real ballot isn&apos;t published yet
+          </div>
         )}
         <div className="mt-6 flex flex-wrap justify-center gap-8">
           <Stat num={localCount} label="Races & measures" />
