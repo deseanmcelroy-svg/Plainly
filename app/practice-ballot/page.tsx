@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { useHouseholdProfile } from '@/lib/householdProfile';
 import { estimateImpact, hasProfileData, buildPracticeImpactSynopsis } from '@/lib/impactEstimate';
 import { BallotItem, HouseholdProfile, LocationBallot } from '@/lib/types';
+import RatePrompt, { shouldShowRatePrompt } from '@/components/RatePrompt';
 
 type Selections = Record<string, string>;
 
@@ -54,6 +55,7 @@ export default function PracticeBallotPage() {
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showRatePrompt, setShowRatePrompt] = useState(false);
   useEffect(() => {
     if (!user) return;
     fetch('/api/profile')
@@ -131,6 +133,15 @@ export default function PracticeBallotPage() {
     setSelections(next);
     if (location) {
       try { localStorage.setItem(storageKey(location), JSON.stringify(next)); } catch {}
+    }
+    // Show rate prompt when the last item is selected
+    if (ballot) {
+      const completedCount = Object.keys(next).filter(id =>
+        ballot.ballotItems.some(item => item.id === id)
+      ).length;
+      if (completedCount === ballot.ballotItems.length && shouldShowRatePrompt()) {
+        setTimeout(() => setShowRatePrompt(true), 800);
+      }
     }
   }
 
@@ -357,6 +368,7 @@ export default function PracticeBallotPage() {
       </div>
 
       <Footer />
+      {showRatePrompt && <RatePrompt onDismiss={() => setShowRatePrompt(false)} />}
     </main>
   );
 }
