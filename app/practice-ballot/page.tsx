@@ -344,9 +344,9 @@ export default function PracticeBallotPage() {
                     </div>
                     <Link
                       href={`/word-around-town?location=${encodeURIComponent(location)}`}
-                      className="text-center text-sm font-semibold text-terracotta underline"
+                      className="rounded-xl bg-terracotta px-5 py-3 text-center text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-[#b04f30]"
                     >
-                      View community results \u2192
+                      View community results &rarr;
                     </Link>
                   </div>
                 )}
