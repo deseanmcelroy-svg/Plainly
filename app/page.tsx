@@ -118,7 +118,7 @@ export default function Home() {
         {ballot && (
           <>
             {ballot.source === 'sample' && (
-              <div className="mx-auto max-w-[1000px] px-[6vw] pt-8">
+              <div className="mx-auto max-w-[1000px] px-[6vw] pt-8 pb-6">
                 <div className="rounded-2xl border border-dashed border-terracotta/40 bg-terracotta/5 p-6">
                   <div className="flex items-start gap-4">
                     <span className="text-3xl">📅</span>
@@ -170,6 +170,9 @@ export default function Home() {
                 </div>
               </div>
             )}
+            <div className="mx-auto max-w-[1000px] px-[6vw]">
+              <hr className="border-line/30" />
+            </div>
             <BallotSummary ballot={ballot} />
             <ElectionCalendar events={ballot.calendarEvents} />
             <Countdown targetDate={ballot.nextElectionDate} />
