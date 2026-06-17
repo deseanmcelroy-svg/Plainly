@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/lib/theme';
 import { HouseholdProfileProvider } from '@/lib/householdProfile';
 import OnboardingModal from '@/components/OnboardingModal';
 import ElectionBanner from '@/components/ElectionBanner';
+import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -82,6 +83,7 @@ export default function RootLayout({
               <OnboardingModal />
               <ElectionBanner />
               {children}
+              <Analytics />
             </HouseholdProfileProvider>
           </AuthProvider>
         </ThemeProvider>
