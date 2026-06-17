@@ -13,6 +13,8 @@ import VoterChecklist from '@/components/VoterChecklist';
 import Footer from '@/components/Footer';
 import { LocationBallot } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
+import WaitlistForm, { isWaitlistDone } from '@/components/WaitlistForm';
+import BallotWaitlist from '@/components/BallotWaitlist';
 
 export default function Home() {
   const { user } = useAuth();
@@ -20,6 +22,8 @@ export default function Home() {
   const [ballot, setBallot] = useState<LocationBallot | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [waitlistDone, setWaitlistDone] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
 
   async function lookup(location: string) {
     setLoading(true);
@@ -59,13 +63,13 @@ export default function Home() {
 
   // For signed-in users with a saved location, look it up automatically
   useEffect(() => {
+    setWaitlistDone(isWaitlistDone());
     if (!user || ballot) return;
     fetch('/api/profile')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.saved_location) {
-          lookup(data.saved_location);
-        }
+        if (data?.saved_location) lookup(data.saved_location);
+        if (data?.notify_email) setUserEmail(data.notify_email);
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -152,6 +156,18 @@ export default function Home() {
                         >
                           Browse the glossary
                         </a>
+                      </div>
+                      {!waitlistDone && (
+                        <div className="mt-5 border-t border-terracotta/20 pt-4">
+                          <WaitlistForm
+                            location={ballot.location}
+                            prefillEmail={userEmail}
+                            onDone={() => setWaitlistDone(true)}
+                          />
+                        </div>
+                      )}
+                      <div className="mt-4 border-t border-terracotta/20 pt-4">
+                        <BallotWaitlist location={ballot.locationLabel} compact />
                       </div>
                     </div>
                   </div>

@@ -89,7 +89,26 @@ create policy "Users can update own profile"
   using (auth.uid() = id);
 
 -- ===========================================================================
--- Community votes
+-- Ballot waitlist
+--
+-- Stores emails of users who want to be notified when real ballot data
+-- is available for their area. One entry per email — duplicates rejected.
+-- ===========================================================================
+
+create table if not exists public.ballot_waitlist (
+  id bigint generated always as identity primary key,
+  email text not null,
+  zip text not null,
+  created_at timestamptz not null default now(),
+  constraint ballot_waitlist_email_key unique (email)
+);
+
+alter table public.ballot_waitlist enable row level security;
+
+drop policy if exists "Anyone can join waitlist" on public.ballot_waitlist;
+create policy "Anyone can join waitlist"
+  on public.ballot_waitlist for insert
+  with check (true);
 --
 -- Anonymized practice ballot submissions used to show community stats
 -- (e.g. "68% of Plainly users in your area voted YES on the school levy").
@@ -132,3 +151,28 @@ drop policy if exists "Anyone can read community votes" on public.community_vote
 create policy "Anyone can read community votes"
   on public.community_votes for select
   using (true);
+
+-- ===========================================================================
+-- Ballot waitlist
+--
+-- Stores email + ZIP for users who want to be notified when real ballot
+-- data is available for their area. No user ID needed — works for anyone.
+-- TO ADD: run this in Supabase SQL Editor.
+-- ===========================================================================
+
+create table if not exists public.ballot_waitlist (
+  id bigint generated always as identity primary key,
+  email text not null,
+  zip text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists ballot_waitlist_zip on public.ballot_waitlist (zip);
+create index if not exists ballot_waitlist_email on public.ballot_waitlist (email);
+
+alter table public.ballot_waitlist enable row level security;
+
+drop policy if exists "Anyone can join waitlist" on public.ballot_waitlist;
+create policy "Anyone can join waitlist"
+  on public.ballot_waitlist for insert
+  with check (true);

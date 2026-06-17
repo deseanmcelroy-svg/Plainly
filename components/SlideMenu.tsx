@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
 import SignInForm from '@/components/auth/SignInForm';
 import LogoMark from '@/components/LogoMark';
+import WaitlistForm, { isWaitlistDone } from '@/components/WaitlistForm';
 
 interface SlideMenuProps {
   open: boolean;
@@ -166,6 +167,9 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
           <MenuLink href="/privacy" icon="🔒" label="Privacy" onClick={onClose} chevron />
         </MenuSection>
 
+        {/* Ballot notification */}
+        <WaitlistMenuSectionInline onClose={onClose} />
+
         {/* Support */}
         <MenuSection label="Support" last>
           <MenuLink href="/faq" icon="❓" label="Help & FAQ" onClick={onClose} chevron />
@@ -260,6 +264,47 @@ function ToggleRow({
         />
         <span className="switch-slider absolute inset-0 cursor-pointer rounded-full bg-navy/15 transition-colors" />
       </label>
+    </div>
+  );
+}
+
+function WaitlistMenuSectionInline({ onClose }: { onClose: () => void }) {
+  const [done, setDone] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    setDone(isWaitlistDone());
+  }, []);
+
+  if (done) return null;
+
+  return (
+    <div className="border-t border-line/40 px-[6vw] py-4">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center gap-3 text-left"
+      >
+        <span className="w-6 flex-shrink-0 text-center text-lg">🔔</span>
+        <span className="flex-1 text-base font-semibold text-navy">
+          Notify me when my ballot is ready
+        </span>
+        <span className="text-xs text-muted">{expanded ? '▲' : '▼'}</span>
+      </button>
+      {expanded && (
+        <div className="mt-3 pl-9">
+          <p className="mb-3 text-sm text-muted">
+            Real ballot data typically goes live in September. Enter your email and we&apos;ll let you know the moment it&apos;s available for your area.
+          </p>
+          <WaitlistForm
+            compact
+            onDone={() => {
+              setDone(true);
+              setExpanded(false);
+              setTimeout(onClose, 1500);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
