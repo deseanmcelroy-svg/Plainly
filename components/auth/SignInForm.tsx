@@ -65,7 +65,8 @@ export default function SignInForm() {
       </button>
       {status === 'error' && (
         <p className="text-sm text-terracotta">
-          Something went wrong sending the link. Please try again.
+          Could not send a link to this email — try a different email address.
+          Note: sign-in is optional. All features work without an account.
         </p>
       )}
       <p className="text-xs text-muted">
