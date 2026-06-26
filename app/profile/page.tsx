@@ -169,6 +169,8 @@ export default function ProfilePage() {
           school levies and bond issues. They&apos;re never used to suggest
           how to vote, and you can clear them anytime.
         </p>
+
+        {user && <DeleteAccountSection />}
       </div>
 
       <Footer />
@@ -212,6 +214,72 @@ function OptionGrid<T extends string | boolean>({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function DeleteAccountSection() {
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleDelete() {
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/delete-account', { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      // Clear local storage and redirect
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch {}
+      window.location.href = '/';
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div className="mt-12 border-t border-line pt-8">
+      <h2 className="font-display text-lg font-bold text-navy">Account</h2>
+      <p className="mt-1 text-sm text-muted">
+        Deleting your account permanently removes your profile, saved location,
+        and all household data from Plainly. This cannot be undone.
+      </p>
+
+      {!confirming ? (
+        <button
+          onClick={() => setConfirming(true)}
+          className="mt-4 rounded-xl border-2 border-terracotta/40 px-4 py-2.5 text-sm font-semibold text-terracotta hover:border-terracotta"
+        >
+          Delete my account
+        </button>
+      ) : (
+        <div className="mt-4 rounded-2xl border border-terracotta/30 bg-terracotta/5 p-5">
+          <p className="text-sm font-semibold text-navy">
+            Are you sure? This will permanently delete your account and all your data.
+          </p>
+          <div className="mt-4 flex gap-3">
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="rounded-xl bg-terracotta px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {deleting ? 'Deleting…' : 'Yes, delete my account'}
+            </button>
+            <button
+              onClick={() => setConfirming(false)}
+              disabled={deleting}
+              className="rounded-xl border-2 border-line px-4 py-2.5 text-sm font-semibold text-navy"
+            >
+              Cancel
+            </button>
+          </div>
+          {error && <p className="mt-3 text-sm text-terracotta">{error}</p>}
+        </div>
+      )}
     </div>
   );
 }

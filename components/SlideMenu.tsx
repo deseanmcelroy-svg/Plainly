@@ -138,7 +138,6 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
           <MenuLink href="/#how" icon="💬" label="How it works" onClick={onClose} />
           <MenuLink href="/#vote" icon="✅" label="Voter checklist" onClick={onClose} />
         </MenuSection>
-
         {/* Account */}
         {user && (
           <MenuSection label="Account">
