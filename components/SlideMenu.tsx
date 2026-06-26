@@ -104,7 +104,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
             )}
           </div>
 
-          {!user && !loading && (
+          {!user && !loading && !process.env.NEXT_PUBLIC_HIDE_AUTH && (
             <div className="mt-4">
               {showSignIn ? (
                 <SignInForm />

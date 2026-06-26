@@ -87,7 +87,7 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {!authLoading && !user && supabaseEnabled && (
+        {!authLoading && !user && supabaseEnabled && !process.env.NEXT_PUBLIC_HIDE_AUTH && (
           <div className="mt-6 rounded-2xl border border-line bg-card px-5 py-4 text-center text-sm text-muted">
             You&apos;re not signed in, so these answers will apply for this
             session only and won&apos;t be saved.{' '}
