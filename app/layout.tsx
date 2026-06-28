@@ -4,7 +4,6 @@ import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from '@/lib/theme';
 import { HouseholdProfileProvider } from '@/lib/householdProfile';
 import OnboardingModal from '@/components/OnboardingModal';
-import SplashScreen from '@/components/SplashScreen';
 import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
 
@@ -55,6 +54,26 @@ const themeInitScript = `
 
 // Registers the service worker for PWA installability and offline support.
 // Runs after the page loads so it doesn't compete with initial rendering.
+
+const splashScript = `
+  (function() {
+    var splash = document.createElement('div');
+    splash.id = 'plainly-splash';
+    splash.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#F7F4ED;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;opacity:0;transition:opacity 0.5s ease;pointer-events:none;';
+    splash.innerHTML = '<img src="/icons/icon-512.png" style="width:80px;height:80px;border-radius:18px;"/><div style="font-family:Georgia,serif;font-size:1.8rem;font-weight:700;color:#1A2B3D;">Plainly</div><div style="font-family:sans-serif;font-size:0.85rem;color:#5B8C7B;letter-spacing:0.08em;text-transform:uppercase;">Politics explained, plainly.</div>';
+    document.documentElement.appendChild(splash);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        splash.style.opacity = '1';
+        setTimeout(function() {
+          splash.style.opacity = '0';
+          setTimeout(function() { splash.remove(); }, 500);
+        }, 1400);
+      });
+    });
+  })();
+`;
+
 const swRegisterScript = `
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
@@ -75,13 +94,13 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: splashScript }} />
         <script dangerouslySetInnerHTML={{ __html: swRegisterScript }} />
       </head>
       <body className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable} font-body`}>
         <ThemeProvider>
           <AuthProvider>
             <HouseholdProfileProvider>
-              <SplashScreen />
               <OnboardingModal />
               {children}
               <Analytics />
