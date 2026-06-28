@@ -36,7 +36,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setDarkModeState(true);
       } else if (saved === 'light') {
         setDarkModeState(false);
-      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      } else if (false) {
         setDarkModeState(true);
       }
     } catch {
