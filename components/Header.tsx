@@ -10,7 +10,7 @@ interface HeaderProps {
 
 export default function Header({ onMenuOpen, menuOpen }: HeaderProps) {
   return (
-    <header className="flex items-center justify-between px-[6vw] py-6">
+    <header className="flex items-center justify-between px-[6vw] py-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <Link href="/" className="flex items-center gap-2.5 font-sans text-xl font-light tracking-wide">
         <LogoMark />
         Plainly
