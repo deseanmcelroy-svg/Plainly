@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import LogoMark from '@/components/LogoMark';
 
 export default function SplashScreen() {
-  const [phase, setPhase] = useState<'visible' | 'out' | 'done'>('visible');
+  const [phase, setPhase] = useState<'in' | 'visible' | 'out' | 'done'>('in');
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase('out'), 1200);
-    const t2 = setTimeout(() => setPhase('done'), 1700);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const t1 = setTimeout(() => setPhase('visible'), 50);
+    const t2 = setTimeout(() => setPhase('out'), 1400);
+    const t3 = setTimeout(() => setPhase('done'), 1900);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
   if (phase === 'done') return null;
@@ -26,8 +27,8 @@ export default function SplashScreen() {
         alignItems: 'center',
         justifyContent: 'center',
         gap: '1.25rem',
-        opacity: phase === 'out' ? 0 : 1,
-        transition: phase === 'out' ? 'opacity 0.5s ease' : 'none',
+        opacity: phase === 'in' ? 0 : phase === 'out' ? 0 : 1,
+        transition: 'opacity 0.5s ease',
         pointerEvents: 'none',
       }}
     >
