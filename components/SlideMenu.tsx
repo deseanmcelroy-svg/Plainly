@@ -66,7 +66,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between border-b border-line px-[6vw] py-6">
+        <div className="flex items-center justify-between border-b border-line px-[6vw] py-6" style={{ paddingTop: "max(1.5rem, env(safe-area-inset-top))" }}>
           <div className="flex items-center gap-2.5 font-sans text-xl font-light tracking-wide">
             <LogoMark />
             Plainly
