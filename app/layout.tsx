@@ -4,6 +4,7 @@ import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from '@/lib/theme';
 import { HouseholdProfileProvider } from '@/lib/householdProfile';
 import OnboardingModal from '@/components/OnboardingModal';
+import SplashScreen from '@/components/SplashScreen';
 import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
 
@@ -101,6 +102,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <HouseholdProfileProvider>
+              <SplashScreen />
               <OnboardingModal />
               {children}
               <Analytics />
