@@ -24,7 +24,7 @@ export default function SplashScreen() {
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        backgroundColor: '#1A2B3D',
+        backgroundColor: '#F7F4ED',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -42,7 +42,7 @@ export default function SplashScreen() {
         fontFamily: 'var(--font-fraunces), Georgia, serif',
         fontSize: '1.4rem',
         fontWeight: 700,
-        color: '#F7F4ED',
+        color: '#1A2B3D',
         letterSpacing: '0.01em',
       }}>
         Plainly
