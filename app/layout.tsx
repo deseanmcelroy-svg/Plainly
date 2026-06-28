@@ -4,6 +4,7 @@ import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from '@/lib/theme';
 import { HouseholdProfileProvider } from '@/lib/householdProfile';
 import OnboardingModal from '@/components/OnboardingModal';
+import SplashScreen from '@/components/SplashScreen';
 import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
 
@@ -47,7 +48,7 @@ export const viewport = {
 const themeInitScript = `
   try {
     var saved = localStorage.getItem('plainly-theme');
-    var isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var isDark = saved === 'dark';
     if (isDark) document.documentElement.classList.add('dark');
   } catch (e) {}
 `;
@@ -80,6 +81,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <HouseholdProfileProvider>
+              <SplashScreen />
               <OnboardingModal />
               {children}
               <Analytics />
