@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SlideMenu from '@/components/SlideMenu';
@@ -25,10 +24,16 @@ interface Summary {
   relatedTags: string[];
 }
 
-const PLACEHOLDER_COLORS = {
+const PLACEHOLDER_BG = {
   local: 'linear-gradient(135deg, #1A5C3A, #5B8C7B)',
   state: 'linear-gradient(135deg, #2D4FB5, #4A72D4)',
   national: 'linear-gradient(135deg, #8B3A1A, #D9663E)',
+};
+
+const PLACEHOLDER_EMOJI = {
+  local: '🏘️',
+  state: '🏛️',
+  national: '🗺️',
 };
 
 function NewsDetailContent() {
@@ -38,47 +43,45 @@ function NewsDetailContent() {
   const [article, setArticle] = useState<Article | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [location, setLocation] = useState('');
 
   useEffect(() => {
     try {
-      setLocation(localStorage.getItem('plainly-location') || '');
       const data = searchParams.get('data');
       if (data) {
-        const parsed = JSON.parse(decodeURIComponent(data));
+        const parsed: Article = JSON.parse(decodeURIComponent(data));
         setArticle(parsed);
-        fetchSummary(parsed);
+        let loc = '';
+        try { loc = localStorage.getItem('plainly-location') || ''; } catch {}
+        fetch('/api/news-summary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: parsed.title,
+            description: parsed.description,
+            location: loc,
+          }),
+        })
+          .then(r => r.json())
+          .then(d => setSummary(d))
+          .catch(() => {})
+          .finally(() => setLoading(false));
+      } else {
+        setLoading(false);
       }
     } catch {
       setLoading(false);
     }
   }, []);
 
-  async function fetchSummary(a: Article) {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/news-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: a.title,
-          description: a.description,
-          location,
-        }),
-      });
-      const data = await res.json();
-      setSummary(data);
-    } catch {}
-    setLoading(false);
+  if (!article) {
+    return (
+      <main className="min-h-screen bg-page">
+        <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
+        <div className="px-[6vw] py-16 text-center text-muted">Article not found.</div>
+        <Footer />
+      </main>
+    );
   }
-
-  if (!article) return (
-    <main className="min-h-screen bg-page">
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <div className="px-[6vw] py-16 text-center text-muted">Article not found.</div>
-      <Footer />
-    </main>
-  );
 
   return (
     <main className="min-h-screen bg-page">
@@ -96,48 +99,52 @@ function NewsDetailContent() {
         </div>
 
         {article.imageUrl ? (
-          <img src={article.imageUrl} alt={article.title} className="w-full h-52 object-cover" />
+          <img
+            src={article.imageUrl}
+            alt={article.title}
+            className="h-52 w-full object-cover"
+          />
         ) : (
           <div
-            className="w-full h-52 flex items-center justify-center text-6xl"
-            style={{ background: PLACEHOLDER_COLORS[article.category] }}
+            className="flex h-52 w-full items-center justify-center text-6xl"
+            style={{ background: PLACEHOLDER_BG[article.category] }}
           >
-            {article.category === 'local' ? '🏘️' : article.category === 'state' ? '🏛️' : '🗺️'}
+            {PLACEHOLDER_EMOJI[article.category]}
           </div>
         )}
 
         <div className="px-[6vw] mt-5">
-          <h1 className="font-display text-2xl font-bold text-navy leading-snug mb-2">
+          <h1 className="font-display mb-2 text-2xl font-bold leading-snug text-navy">
             {article.title}
           </h1>
-          <p className="text-xs text-muted mb-6">{article.source}</p>
+          <p className="mb-6 text-xs text-muted">{article.source}</p>
 
           {loading ? (
             <div className="flex flex-col gap-4">
-              {[1,2,3].map(i => (
-                <div key={i} className="rounded-2xl bg-card h-32 animate-pulse" />
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-32 animate-pulse rounded-2xl bg-card" />
               ))}
             </div>
           ) : summary ? (
             <div className="flex flex-col gap-4">
 
-              <div className="rounded-2xl bg-card border border-line p-5">
+              <div className="rounded-2xl border border-line bg-card p-5">
                 <div className="mb-3 text-xs font-bold uppercase tracking-wider text-terracotta">
                   📋 What this means for you
                 </div>
-                <p className="text-sm text-navy leading-relaxed">{summary.shortSummary}</p>
+                <p className="text-sm leading-relaxed text-navy">{summary.shortSummary}</p>
               </div>
 
               {summary.whatYourVoteDoes.length > 0 && (
-                <div className="rounded-2xl bg-card border border-line p-5">
+                <div className="rounded-2xl border border-line bg-card p-5">
                   <div className="mb-3 text-xs font-bold uppercase tracking-wider text-terracotta">
                     🗳️ What your vote does
                   </div>
                   <div className="flex flex-col gap-3">
                     {summary.whatYourVoteDoes.map(item => (
-                      <div key={item.vote} className="flex gap-3 items-start">
-                        <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-terracotta flex-shrink-0" />
-                        <p className="text-sm text-navy leading-relaxed">
+                      <div key={item.vote} className="flex items-start gap-3">
+                        <div className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-terracotta" />
+                        <p className="text-sm leading-relaxed text-navy">
                           <span className="font-bold">{item.vote}</span> — {item.means}
                         </p>
                       </div>
@@ -146,15 +153,15 @@ function NewsDetailContent() {
                 </div>
               )}
 
-              <div className="rounded-2xl bg-card border border-line p-5">
+              <div className="rounded-2xl border border-line bg-card p-5">
                 <div className="mb-3 text-xs font-bold uppercase tracking-wider text-terracotta">
                   🏘️ Local context
                 </div>
-                <p className="text-sm text-navy leading-relaxed">{summary.localContext}</p>
+                <p className="text-sm leading-relaxed text-navy">{summary.localContext}</p>
               </div>
 
               {summary.relatedTags.length > 0 && (
-                <div className="rounded-2xl bg-card border border-line p-5">
+                <div className="rounded-2xl border border-line bg-card p-5">
                   <div className="mb-3 text-xs font-bold uppercase tracking-wider text-terracotta">
                     🔗 Related topics
                   </div>
@@ -171,7 +178,7 @@ function NewsDetailContent() {
                 </div>
               )}
 
-              
+              <a
                 href={article.url}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -181,7 +188,7 @@ function NewsDetailContent() {
               </a>
             </div>
           ) : (
-            <p className="text-muted text-sm">Could not load summary. Try again later.</p>
+            <p className="text-sm text-muted">Could not load summary. Please try again.</p>
           )}
         </div>
       </div>

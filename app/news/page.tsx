@@ -32,10 +32,16 @@ const CATEGORY_COLORS = {
   national: { bg: '#FFF0EB', text: '#C04A1A', label: 'National' },
 };
 
-const PLACEHOLDER_COLORS = {
+const PLACEHOLDER_BG = {
   local: 'linear-gradient(135deg, #1A5C3A, #5B8C7B)',
   state: 'linear-gradient(135deg, #2D4FB5, #4A72D4)',
   national: 'linear-gradient(135deg, #8B3A1A, #D9663E)',
+};
+
+const PLACEHOLDER_EMOJI = {
+  local: '🏘️',
+  state: '🏛️',
+  national: '🗺️',
 };
 
 export default function NewsPage() {
@@ -47,7 +53,9 @@ export default function NewsPage() {
 
   useEffect(() => {
     let loc = '';
-    try { loc = localStorage.getItem('plainly-location') || ''; } catch {}
+    try {
+      loc = localStorage.getItem('plainly-location') || '';
+    } catch {}
     setLocation(loc);
     fetch(`/api/news?location=${encodeURIComponent(loc)}`)
       .then(r => r.json())
@@ -56,35 +64,46 @@ export default function NewsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = filter === 'all' ? articles : articles.filter(a => a.category === filter);
+  const filtered = filter === 'all'
+    ? articles
+    : articles.filter(a => a.category === filter);
 
   return (
     <main className="min-h-screen bg-page">
       <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
       <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
+
       <div className="mx-auto max-w-2xl px-[6vw] pb-16">
         <div className="mb-6">
           <h1 className="font-display text-3xl font-bold text-navy">In the news</h1>
           <p className="mt-1 text-sm text-muted">
-            {location ? `Stories relevant to your ballot · ${location}` : 'Civic news relevant to voters'}
+            {location
+              ? `Stories relevant to your ballot · ${location}`
+              : 'Civic news relevant to voters'}
           </p>
         </div>
-        <div className="mb-6 flex gap-2 flex-wrap">
+
+        <div className="mb-6 flex flex-wrap gap-2">
           {(['all', 'local', 'state', 'national'] as const).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               className={`rounded-full px-4 py-1.5 text-sm font-semibold capitalize transition-colors ${
-                filter === f ? 'bg-terracotta text-white' : 'bg-card text-navy border border-line'
+                filter === f
+                  ? 'bg-terracotta text-white'
+                  : 'bg-card text-navy border border-line'
               }`}
             >
               {f}
             </button>
           ))}
         </div>
+
         {loading ? (
           <div className="flex flex-col gap-4">
-            {[1,2,3].map(i => <div key={i} className="rounded-2xl bg-card h-64 animate-pulse" />)}
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-64 animate-pulse rounded-2xl bg-card" />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl bg-card p-8 text-center">
@@ -93,50 +112,67 @@ export default function NewsPage() {
         ) : (
           <div className="flex flex-col gap-4">
             {filtered.map(article => (
-              <div key={article.id} className="overflow-hidden rounded-2xl bg-card border border-line">
+              <div
+                key={article.id}
+                className="overflow-hidden rounded-2xl border border-line bg-card"
+              >
                 <div className="relative">
                   {article.imageUrl ? (
                     <img
                       src={article.imageUrl}
                       alt={article.title}
-                      className="w-full h-44 object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      className="h-44 w-full object-cover"
+                      onError={e => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
                     />
                   ) : (
                     <div
-                      className="w-full h-44 flex items-center justify-center text-5xl"
-                      style={{ background: PLACEHOLDER_COLORS[article.category] }}
+                      className="flex h-44 w-full items-center justify-center text-5xl"
+                      style={{ background: PLACEHOLDER_BG[article.category] }}
                     >
-                      {article.category === 'local' ? '🏘️' : article.category === 'state' ? '🏛️' : '🗺️'}
+                      {PLACEHOLDER_EMOJI[article.category]}
                     </div>
                   )}
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute left-3 top-3">
                     <span
                       className="rounded-full px-2 py-1 text-xs font-bold"
-                      style={{ background: CATEGORY_COLORS[article.category].bg, color: CATEGORY_COLORS[article.category].text }}
+                      style={{
+                        background: CATEGORY_COLORS[article.category].bg,
+                        color: CATEGORY_COLORS[article.category].text,
+                      }}
                     >
                       {CATEGORY_COLORS[article.category].label}
                     </span>
                   </div>
                 </div>
+
                 <div className="p-4">
                   <div className="mb-2 flex items-center gap-2">
                     <span className="text-xs font-semibold text-navy">{article.source}</span>
                     <span className="text-xs text-muted">· {timeAgo(article.publishedAt)}</span>
                   </div>
-                  <h2 className="mb-2 text-base font-bold text-navy leading-snug">{article.title}</h2>
-                  <p className="mb-3 text-sm text-muted leading-relaxed line-clamp-2">{article.description}</p>
+                  <h2 className="mb-2 text-base font-bold leading-snug text-navy">
+                    {article.title}
+                  </h2>
+                  <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-muted">
+                    {article.description}
+                  </p>
+
                   <Link
                     href={`/news/${encodeURIComponent(article.id)}?data=${encodeURIComponent(JSON.stringify(article))}`}
-                    className="block w-full rounded-xl bg-page border border-terracotta/30 p-3 mb-3 cursor-pointer hover:border-terracotta transition-colors"
+                    className="mb-3 block w-full cursor-pointer rounded-xl border border-terracotta/30 bg-page p-3 transition-colors hover:border-terracotta"
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold uppercase tracking-wider text-terracotta">What this means for you</span>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-terracotta">
+                        What this means for you
+                      </span>
                       <span className="text-xs text-terracotta">→</span>
                     </div>
                     <p className="text-xs text-navy">Tap to understand deeper context</p>
                   </Link>
-                  
+
+                  <a
                     href={article.url}
                     target="_blank"
                     rel="noopener noreferrer"
