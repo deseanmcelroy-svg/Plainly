@@ -64,8 +64,8 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
       />
 
       {/* Panel */}
-      <div className="fixed inset-y-0 right-0 z-50 flex w-[88vw] max-w-sm flex-col bg-[#F7F4ED] dark:bg-[#1A2B3D] shadow-2xl"
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div className="fixed inset-y-0 right-0 z-50 flex w-[88vw] max-w-sm flex-col shadow-2xl"
+        style={{ paddingTop: 'env(safe-area-inset-top)', backgroundColor: darkMode ? '#1A2B3D' : '#F7F4ED', color: darkMode ? '#F7F4ED' : '#1A2B3D' }}>
 
         {/* Header */}
         <div className="flex items-start justify-between border-b border-line dark:border-white/10 px-[6vw] py-6">
