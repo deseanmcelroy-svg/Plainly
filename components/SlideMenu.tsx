@@ -68,7 +68,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
         style={{ paddingTop: 'env(safe-area-inset-top)' }}>
 
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-line px-[6vw] py-6">
+        <div className="flex items-start justify-between border-b border-line dark:border-white/10 px-[6vw] py-6">
           <div className="flex items-center gap-3 flex-1 mr-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green">
               <span className="text-base font-bold text-cream">
@@ -78,7 +78,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
             <div className="flex-1 min-w-0">
               {user ? (
                 <>
-                  <p className="text-sm font-bold text-navy truncate">{user.email}</p>
+                  <p className="text-sm font-bold text-navy dark:text-cream truncate">{user.email}</p>
                   <button
                     onClick={() => { signOut(); onClose(); }}
                     className="text-xs text-muted hover:text-navy"
@@ -88,7 +88,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-bold text-navy">Guest</p>
+                  <p className="text-sm font-bold text-navy dark:text-cream">Guest</p>
                   <p className="text-xs text-muted">Sign in to save your location &amp; checklist</p>
                   {!process.env.NEXT_PUBLIC_HIDE_AUTH && supabaseEnabled && (
                     <div className="mt-2">
@@ -111,7 +111,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
           <button
             onClick={onClose}
             aria-label="Close menu"
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border-2 border-line text-navy"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border-2 border-line dark:border-white/20 text-navy dark:text-cream"
           >
             ✕
           </button>
@@ -175,7 +175,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
 
 function MenuSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="border-b border-line/40">
+    <div className="border-b border-line/40 dark:border-white/10">
       <p className="px-[6vw] pb-1 pt-4 text-[10px] font-bold uppercase tracking-widest text-muted">
         {label}
       </p>
@@ -202,7 +202,7 @@ function MenuLink({
     <a
       {...props}
       onClick={onClick}
-      className="flex items-center gap-3 px-[6vw] py-3 text-navy hover:bg-line/20"
+      className="flex items-center gap-3 px-[6vw] py-3 text-navy dark:text-cream hover:bg-line/20 dark:hover:bg-white/10"
       dangerouslySetInnerHTML={undefined}
     >
       <span className="w-6 flex-shrink-0 text-center text-lg">{icon}</span>
@@ -226,7 +226,7 @@ function ToggleRow({
   return (
     <div className="flex items-center gap-3 px-[6vw] py-3">
       <span className="w-6 flex-shrink-0 text-center text-lg">{icon}</span>
-      <span className="flex-1 text-base font-semibold text-navy">{label}</span>
+      <span className="flex-1 text-base font-semibold text-navy dark:text-cream">{label}</span>
       <label className="relative inline-block h-[26px] w-11 flex-shrink-0">
         <input
           type="checkbox"
@@ -257,7 +257,7 @@ function WaitlistMenuSectionInline({ onClose }: { onClose: () => void }) {
         className="flex w-full items-center gap-3 text-left"
       >
         <span className="w-6 flex-shrink-0 text-center text-lg">🔔</span>
-        <span className="flex-1 text-base font-semibold text-navy">
+        <span className="flex-1 text-base font-semibold text-navy dark:text-cream">
           Notify me when my ballot is ready
         </span>
         <span className="text-xs text-muted">{expanded ? '▲' : '▼'}</span>
