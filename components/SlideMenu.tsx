@@ -57,6 +57,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
 
   return (
     <>
+      <style>{`.plainly-menu * { color: inherit !important; border-color: rgba(128,128,128,0.2) !important; }`}</style>
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-40 bg-navy/50 backdrop-blur-sm"
@@ -64,7 +65,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
       />
 
       {/* Panel */}
-      <div className="fixed inset-y-0 right-0 z-50 flex w-[88vw] max-w-sm flex-col shadow-2xl"
+      <div className="fixed inset-y-0 right-0 z-50 flex w-[88vw] max-w-sm flex-col shadow-2xl plainly-menu"
         style={{ paddingTop: 'env(safe-area-inset-top)', backgroundColor: darkMode ? '#1A2B3D' : '#F7F4ED', color: darkMode ? '#F7F4ED' : '#1A2B3D' }}>
 
         {/* Header */}
