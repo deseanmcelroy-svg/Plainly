@@ -81,7 +81,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
                   <p className="text-sm font-bold text-navy dark:text-cream truncate">{user.email}</p>
                   <button
                     onClick={() => { signOut(); onClose(); }}
-                    className="text-xs text-muted hover:text-navy"
+                    className="text-xs text-muted dark:text-cream/50 hover:text-navy"
                   >
                     Sign out
                   </button>
@@ -89,7 +89,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
               ) : (
                 <>
                   <p className="text-sm font-bold text-navy dark:text-cream">Guest</p>
-                  <p className="text-xs text-muted">Sign in to save your location &amp; checklist</p>
+                  <p className="text-xs text-muted dark:text-cream/50">Sign in to save your location &amp; checklist</p>
                   {!process.env.NEXT_PUBLIC_HIDE_AUTH && supabaseEnabled && (
                     <div className="mt-2">
                       {showSignIn ? (
@@ -175,8 +175,8 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
 
 function MenuSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="border-b border-line/40 dark:border-white/10">
-      <p className="px-[6vw] pb-1 pt-4 text-[10px] font-bold uppercase tracking-widest text-muted">
+    <div className="border-b border-line/40 dark:border-white/10 dark:border-white/10">
+      <p className="px-[6vw] pb-1 pt-4 text-[10px] font-bold uppercase tracking-widest text-muted dark:text-cream/50">
         {label}
       </p>
       {children}
@@ -207,10 +207,10 @@ function MenuLink({
     >
       <span className="w-6 flex-shrink-0 text-center text-lg">{icon}</span>
       <span
-        className="flex-1 text-base font-semibold"
+        className="flex-1 text-base font-semibold text-navy dark:text-cream"
         dangerouslySetInnerHTML={{ __html: label }}
       />
-      {chevron && <span className="text-muted">›</span>}
+      {chevron && <span className="text-muted dark:text-cream/50">›</span>}
     </a>
   );
 }
@@ -260,7 +260,7 @@ function WaitlistMenuSectionInline({ onClose }: { onClose: () => void }) {
         <span className="flex-1 text-base font-semibold text-navy dark:text-cream">
           Notify me when my ballot is ready
         </span>
-        <span className="text-xs text-muted">{expanded ? '▲' : '▼'}</span>
+        <span className="text-xs text-muted dark:text-cream/50">{expanded ? '▲' : '▼'}</span>
       </button>
       {expanded && (
         <div className="mt-3 pl-9">
