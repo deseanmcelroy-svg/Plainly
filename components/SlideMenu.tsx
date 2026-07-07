@@ -25,7 +25,7 @@ const supabaseEnabled = !!(
 
 export default function SlideMenu({ open, onClose }: SlideMenuProps) {
   const { user, loading, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { isDark, toggle } = useTheme();
   const [showSignIn, setShowSignIn] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [reminders, setReminders] = useState(false);
@@ -146,8 +146,8 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
             <ToggleRow
               icon="🌙"
               label="Dark mode"
-              checked={theme === 'dark'}
-              onChange={v => setTheme(v ? 'dark' : 'light')}
+              checked={isDark}
+              onChange={() => toggle()}
             />
             {user && (
               <ToggleRow
