@@ -61,7 +61,7 @@ export default function SignInForm() {
         disabled={status === 'sending'}
         className="rounded-xl bg-navy px-4 py-3 text-base font-semibold text-cream transition-colors hover:bg-navy/90 disabled:opacity-60"
       >
-        {status === 'sending' ? 'Sending link…' : 'Email me a sign-in link'}
+        {status === 'sending' ? 'Sending link…' : '<span style={{ color: "#F7F4ED" }}>Email me a sign-in link</span>'}
       </button>
       {status === 'error' && (
         <p className="text-sm text-terracotta">
