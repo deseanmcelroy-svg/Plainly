@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 const CONGRESS_API_KEY = process.env.CONGRESS_API_KEY;
 const BASE = 'https://api.congress.gov/v3';
 const CURRENT_CONGRESS = 119;
