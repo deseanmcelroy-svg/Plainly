@@ -12,74 +12,119 @@ interface Member {
   party: string;
   chamber: string;
   state: string;
-  district?: string;
+  district: number | null;
   depiction: string | null;
   nextElection: string | null;
 }
 
-const PARTY_COLORS: Record<string, { bg: string; text: string }> = {
-  Republican: { bg: 'rgba(239,68,68,0.2)', text: '#FCA5A5' },
-  Democrat: { bg: 'rgba(59,130,246,0.2)', text: '#93C5FD' },
-  Democratic: { bg: 'rgba(59,130,246,0.2)', text: '#93C5FD' },
-  Independent: { bg: 'rgba(147,51,234,0.2)', text: '#C4B5FD' },
+interface VoteOrActivity {
+  id: string;
+  bill: string;
+  description: string;
+  position: string | null;
+  date: string;
+  result: string;
+}
+
+interface MemberData {
+  member: Member;
+  billsCount: number;
+  recentVotes: VoteOrActivity[];
+  isActivity: boolean;
+  loading: boolean;
+  error: string;
+}
+
+const PARTY_COLOR: Record<string, string> = {
+  Republican: '#C04A1A',
+  Democratic: '#2D4FB5',
+  Independent: '#5B8C7B',
 };
-
-function getInitials(name: string): string {
-  return name.split(',').reverse().join(' ').trim().split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
-}
-
-function getReelectionText(year: string | null): { text: string; soon: boolean } {
-  if (!year) return { text: 'Reelection date unknown', soon: false };
-  const y = parseInt(year);
-  const soon = y <= 2026;
-  return {
-    text: soon
-      ? `Up for reelection in Nov ${y} — on your ballot this cycle`
-      : `Up for reelection in Nov ${y}`,
-    soon,
-  };
-}
 
 export default function GovernmentPage() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState('');
-  const [error, setError] = useState('');
   const [zipInput, setZipInput] = useState('');
+  const [members, setMembers] = useState<Member[]>([]);
+  const [memberData, setMemberData] = useState<Record<string, MemberData>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let loc = '';
+    try {
+      loc = localStorage.getItem('plainly-location') || '';
+    } catch {}
+    setLocation(loc);
+    loadMembers(loc || '44721');
+  }, []);
+
+  async function loadMembers(loc: string) {
+    setLoading(true);
+    setError('');
+    setMembers([]);
+    setMemberData({});
+    try {
+      const res = await fetch(`/api/congress?type=members&location=${encodeURIComponent(loc)}`);
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
+      const found: Member[] = data.members || [];
+      setMembers(found);
+      setLoading(false);
+
+      // Load bills + votes/activity for each member in parallel.
+      found.forEach((m) => {
+        setMemberData((prev) => ({
+          ...prev,
+          [m.id]: { member: m, billsCount: 0, recentVotes: [], isActivity: false, loading: true, error: '' },
+        }));
+
+        Promise.all([
+          fetch(`/api/congress?type=bills&memberId=${m.id}`).then((r) => r.json()),
+          fetch(`/api/congress?type=votes&memberId=${m.id}&chamber=${encodeURIComponent(m.chamber)}`).then((r) =>
+            r.json()
+          ),
+        ])
+          .then(([billsRes, votesRes]) => {
+            setMemberData((prev) => ({
+              ...prev,
+              [m.id]: {
+                member: m,
+                billsCount: (billsRes.bills || []).length,
+                recentVotes: (votesRes.votes || []).slice(0, 3),
+                isActivity: !!votesRes.isActivity,
+                loading: false,
+                error: billsRes.error || votesRes.error || '',
+              },
+            }));
+          })
+          .catch(() => {
+            setMemberData((prev) => ({
+              ...prev,
+              [m.id]: { member: m, billsCount: 0, recentVotes: [], isActivity: false, loading: false, error: 'Could not load.' },
+            }));
+          });
+      });
+    } catch {
+      setError('Could not load your representatives.');
+      setLoading(false);
+    }
+  }
 
   function handleZipSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!zipInput.trim()) return;
-    try { localStorage.setItem('plainly-location', zipInput.trim()); } catch {}
+    try {
+      localStorage.setItem('plainly-location', zipInput.trim());
+    } catch {}
     setLocation(zipInput.trim());
-    setLoading(true);
-    setMembers([]);
-    setError('');
-    fetch('/api/congress?type=members&location=' + encodeURIComponent(zipInput.trim()))
-      .then(r => r.json())
-      .then(d => {
-        if (d.error) setError(d.error);
-        else setMembers(d.members || []);
-      })
-      .catch(() => setError('Could not load representatives.'))
-      .finally(() => setLoading(false));
+    loadMembers(zipInput.trim());
   }
-
-  useEffect(() => {
-    let loc = '';
-    try { loc = localStorage.getItem('plainly-location') || ''; } catch {}
-    setLocation(loc);
-    fetch('/api/congress?type=members&location=' + encodeURIComponent(loc))
-      .then(r => r.json())
-      .then(d => {
-        if (d.error) setError(d.error);
-        else setMembers(d.members || []);
-      })
-      .catch(() => setError('Could not load representatives.'))
-      .finally(() => setLoading(false));
-  }, []);
 
   return (
     <main className="min-h-screen bg-page">
@@ -90,7 +135,9 @@ export default function GovernmentPage() {
         <div className="mb-6">
           <h1 className="font-display text-3xl font-bold text-navy">Grade your government</h1>
           <p className="mt-1 text-sm text-muted">
-            {location ? `How your representatives have voted · ${location}` : 'How your federal representatives have voted'}
+            {location
+              ? `Your federal representatives · ${location}`
+              : 'See how your federal representatives are doing'}
           </p>
         </div>
 
@@ -98,94 +145,112 @@ export default function GovernmentPage() {
           <input
             type="text"
             value={zipInput}
-            onChange={e => setZipInput(e.target.value)}
+            onChange={(e) => setZipInput(e.target.value)}
             placeholder={location || 'Enter your ZIP code'}
             className="flex-1 rounded-xl border-2 border-line bg-card px-4 py-2.5 text-sm text-navy focus:border-terracotta focus:outline-none"
           />
-          <button
-            type="submit"
-            className="rounded-xl bg-terracotta px-4 py-2.5 text-sm font-bold text-cream"
-          >
+          <button type="submit" className="rounded-xl bg-terracotta px-4 py-2.5 text-sm font-bold text-cream">
             Search
           </button>
         </form>
 
         {loading ? (
           <div className="flex flex-col gap-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-64 animate-pulse rounded-2xl bg-card" />)}
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-56 animate-pulse rounded-2xl bg-card" />
+            ))}
           </div>
         ) : error ? (
           <div className="rounded-2xl bg-card p-8 text-center">
             <p className="text-muted">{error}</p>
-            <p className="mt-2 text-xs text-muted">Enter your ZIP on the home page to see your representatives.</p>
           </div>
         ) : members.length === 0 ? (
           <div className="rounded-2xl bg-card p-8 text-center">
-            <p className="text-muted">No representatives found.</p>
-            <p className="mt-2 text-xs text-muted">Enter your ZIP on the home page to see your representatives.</p>
+            <p className="text-muted">No representatives found for that ZIP code.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-6">
-            {members.map(member => {
-              const partyColor = PARTY_COLORS[member.party] || { bg: 'rgba(100,100,100,0.2)', text: '#ccc' };
-              const reelection = getReelectionText(member.nextElection);
-              const chamber = member.chamber.includes('Senate') ? 'U.S. Senator' : 'U.S. Representative';
-              const role = member.district
-                ? `${chamber} · District ${member.district}`
-                : `${chamber} · ${member.state}`;
-
+          <div className="flex flex-col gap-5">
+            {members.map((m) => {
+              const d = memberData[m.id];
+              const color = PARTY_COLOR[m.party] || '#1A2B3D';
               return (
-                <div key={member.id} className="overflow-hidden rounded-2xl border border-line bg-card">
-                  <div className="flex items-center gap-3 bg-navy p-4">
-                    {member.depiction ? (
-                      <img src={member.depiction} alt={member.name} className="h-12 w-12 rounded-full object-cover flex-shrink-0" />
+                <div key={m.id} className="overflow-hidden rounded-2xl bg-card border border-line">
+                  <div className="flex gap-4 p-5">
+                    {m.depiction ? (
+                      <img src={m.depiction} alt={m.name} className="h-20 w-20 flex-shrink-0 rounded-xl object-cover" />
                     ) : (
-                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green text-base font-bold text-cream">
-                        {getInitials(member.name)}
+                      <div
+                        className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl text-2xl font-bold text-white"
+                        style={{ background: color }}
+                      >
+                        {m.name?.[0] || '?'}
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-base font-bold text-cream truncate">{member.name.split(',').reverse().join(' ').trim()}</p>
-                      <p className="text-xs text-cream/60 mt-0.5">{role}</p>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-lg font-bold text-navy leading-snug">{m.name}</h2>
+                      <p className="text-sm" style={{ color }}>
+                        {m.party} · {m.chamber === 'Senate' ? 'Senator' : `Representative, District ${m.district ?? ''}`}
+                      </p>
+                      {m.nextElection && (
+                        <p className="mt-1 text-xs text-muted">Up for reelection in {m.nextElection}</p>
+                      )}
                     </div>
-                    <span className="rounded-full px-2 py-1 text-xs font-bold flex-shrink-0"
-                      style={{ background: partyColor.bg, color: partyColor.text }}>
-                      {member.party}
-                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2 border-b border-line px-4 py-2">
-                    <span className="text-sm">🗓️</span>
-                    <span className={'text-xs font-semibold ' + (reelection.soon ? 'text-terracotta' : 'text-green')}>
-                      {reelection.text}
-                    </span>
-                  </div>
+                  {d?.loading ? (
+                    <div className="border-t border-line px-5 py-4">
+                      <div className="h-4 w-2/3 animate-pulse rounded bg-line" />
+                    </div>
+                  ) : d?.error ? (
+                    <div className="border-t border-line px-5 py-4 text-sm text-muted">Couldn't load activity for this member.</div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-px border-t border-line bg-line">
+                        <button
+                          onClick={() => router.push(`/government/${m.id}?type=bills&chamber=${encodeURIComponent(m.chamber)}`)}
+                          className="bg-card px-4 py-3 text-left hover:bg-page"
+                        >
+                          <div className="text-xl font-bold text-navy">{d?.billsCount ?? 0}</div>
+                          <div className="text-xs font-semibold text-muted">Bills sponsored →</div>
+                        </button>
+                        <button
+                          onClick={() => router.push(`/government/${m.id}?type=votes&chamber=${encodeURIComponent(m.chamber)}`)}
+                          className="bg-card px-4 py-3 text-left hover:bg-page"
+                        >
+                          <div className="text-xl font-bold text-navy">{d?.recentVotes.length ?? 0}</div>
+                          <div className="text-xs font-semibold text-muted">
+                            {d?.isActivity ? 'Recent activity →' : 'Votes cast →'}
+                          </div>
+                        </button>
+                      </div>
 
-                  <div className="grid grid-cols-2 divide-x divide-line border-b border-line">
-                    <button
-                      onClick={() => router.push('/government/' + member.id + '?type=bills&name=' + encodeURIComponent(member.name))}
-                      className="py-3 text-center hover:bg-line/20 transition-colors"
-                    >
-                      <p className="text-lg font-bold text-terracotta underline decoration-dotted">Bills</p>
-                      <p className="text-xs text-muted">sponsored</p>
-                      <p className="text-xs text-terracotta font-semibold mt-0.5">Tap to view all</p>
-                    </button>
-                    <button
-                      onClick={() => router.push('/government/' + member.id + '?type=votes&name=' + encodeURIComponent(member.name))}
-                      className="py-3 text-center hover:bg-line/20 transition-colors"
-                    >
-                      <p className="text-lg font-bold text-terracotta underline decoration-dotted">Votes</p>
-                      <p className="text-xs text-muted">cast this term</p>
-                      <p className="text-xs text-terracotta font-semibold mt-0.5">Tap to view all</p>
-                    </button>
-                  </div>
-
-                  <div className="p-4">
-                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted">Recent votes</p>
-                    <RecentVotes memberId={member.id} memberName={member.name} location={location} />
-                  </div>
-
-                  <p className="pb-3 text-center text-xs text-muted">Source: Congress.gov API</p>
+                      {(d?.recentVotes.length ?? 0) > 0 && (
+                        <div className="border-t border-line px-5 py-4">
+                          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">
+                            {d?.isActivity ? 'Recent legislative activity' : 'Recent votes'}
+                          </p>
+                          <div className="flex flex-col gap-2">
+                            {d?.recentVotes.map((v) => (
+                              <div key={v.id} className="text-sm text-navy">
+                                <span className="font-semibold">{v.bill}</span>
+                                {v.position && (
+                                  <span
+                                    className="ml-2 rounded-full px-2 py-0.5 text-xs font-bold"
+                                    style={{
+                                      background: v.position.toLowerCase().includes('yea') || v.position.toLowerCase().includes('yes') ? '#E8F4F0' : '#FFF0EB',
+                                      color: v.position.toLowerCase().includes('yea') || v.position.toLowerCase().includes('yes') ? '#2D7A65' : '#C04A1A',
+                                    }}
+                                  >
+                                    {v.position}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               );
             })}
@@ -194,43 +259,5 @@ export default function GovernmentPage() {
       </div>
       <Footer />
     </main>
-  );
-}
-
-function RecentVotes({ memberId, memberName, location }: { memberId: string; memberName: string; location: string }) {
-  const router = useRouter();
-  const [votes, setVotes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/congress?type=votes&memberId=' + memberId)
-      .then(r => r.json())
-      .then(d => setVotes((d.votes || []).slice(0, 3)))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [memberId]);
-
-  if (loading) return <div className="h-24 animate-pulse rounded-xl bg-line/20" />;
-  if (votes.length === 0) return <p className="text-sm text-muted">No recent votes found.</p>;
-
-  return (
-    <div className="flex flex-col gap-2">
-      {votes.map((vote, i) => (
-        <div
-          key={i}
-          className="cursor-pointer rounded-xl border border-line bg-page p-3 transition-colors hover:border-terracotta"
-          onClick={() => router.push('/government/detail?title=' + encodeURIComponent(vote.bill) + '&vote=' + encodeURIComponent(vote.position) + '&member=' + encodeURIComponent(memberName) + '&location=' + encodeURIComponent(location) + '&type=vote&desc=' + encodeURIComponent(vote.description))}
-        >
-          <div className="mb-1 flex items-start gap-2">
-            <span className={'rounded-full px-2 py-0.5 text-xs font-bold flex-shrink-0 ' + (vote.position === 'Yes' ? 'bg-green/10 text-green' : vote.position === 'No' ? 'bg-terracotta/10 text-terracotta' : 'bg-line text-muted')}>
-              {vote.position?.toUpperCase() || 'N/A'}
-            </span>
-            <p className="text-sm font-semibold leading-snug text-navy">{vote.bill}</p>
-          </div>
-          {vote.date && <p className="text-xs text-muted">{vote.date}</p>}
-          <p className="mt-1 text-xs font-semibold text-terracotta">What this means for you →</p>
-        </div>
-      ))}
-    </div>
   );
 }

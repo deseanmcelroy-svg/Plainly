@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const CONGRESS_API_KEY = process.env.CONGRESS_API_KEY;
 const BASE = 'https://api.congress.gov/v3';
+const CURRENT_CONGRESS = 119;
 
-async function fetchCongress(path: string) {
+async function fetchCongress(path: string, revalidate = 3600) {
   const sep = path.includes('?') ? '&' : '?';
   const url = `${BASE}${path}${sep}api_key=${CONGRESS_API_KEY}&format=json&limit=250`;
-  const res = await fetch(url, { next: { revalidate: 3600 } });
-  if (!res.ok) throw new Error(`Congress API error: ${res.status}`);
+  const res = await fetch(url, { next: { revalidate } });
+  if (!res.ok) throw new Error(`Congress API error: ${res.status} on ${path}`);
   return res.json();
 }
 
@@ -31,10 +32,66 @@ function extractZip(input: string): string {
   return input.match(/\b(\d{5})\b/)?.[1] || '';
 }
 
+// ---------------------------------------------------------------------------
+// Congress.gov has NO endpoint that returns "all votes cast by member X".
+// The House Roll Call Votes API only works the other direction: you fetch a
+// specific vote, then see how every member voted on it. There is also no
+// Senate vote data in this API at all. So for House members we pull the
+// recent vote list, then fetch member-positions for each one (cached, so
+// repeat visits are fast). For Senators we fall back to recent legislative
+// activity built from their own sponsored bills' latest actions.
+// ---------------------------------------------------------------------------
+async function getHouseVotesForMember(bioguideId: string, limit = 15) {
+  const listData = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/2`, 900);
+  const votes: any[] = (listData.houseRollCallVotes || listData.votes || []).slice(0, limit);
+
+  const results = await Promise.all(
+    votes.map(async (v: any) => {
+      const session = v.sessionNumber ?? 2;
+      const rollNumber = v.rollCallNumber ?? v.rollNumber;
+      try {
+        const memberData = await fetchCongress(
+          `/house-vote/${CURRENT_CONGRESS}/${session}/${rollNumber}/members`,
+          3600
+        );
+        const memberList: any[] = memberData.houseRollCallVoteMemberVotes?.results || memberData.results || [];
+        const mine = memberList.find((m: any) => m.bioguideId === bioguideId);
+        if (!mine) return null;
+        return {
+          id: `${CURRENT_CONGRESS}-${session}-${rollNumber}`,
+          bill: v.legislationType && v.legislationNumber ? `${v.legislationType} ${v.legislationNumber}` : v.voteQuestion || 'Procedural vote',
+          description: v.voteQuestion || v.description || '',
+          position: mine.voteCast || mine.votePosition || 'Not Voting',
+          date: v.startDate || v.date || '',
+          result: v.result || '',
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return results.filter(Boolean);
+}
+
+async function getSenateActivity(bioguideId: string) {
+  const data = await fetchCongress(`/member/${bioguideId}/sponsored-legislation`, 3600);
+  const bills: any[] = data.sponsoredLegislation || [];
+  return bills.slice(0, 15).map((b: any) => ({
+    id: `${b.type}${b.number}`,
+    bill: `${b.type} ${b.number}`,
+    description: b.title,
+    position: null,
+    date: b.latestAction?.actionDate || b.introducedDate || '',
+    result: b.latestAction?.text || '',
+  }));
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const location = searchParams.get('location') || '';
   const memberId = searchParams.get('memberId') || '';
+  const chamber = searchParams.get('chamber') || '';
   const type = searchParams.get('type') || 'members';
 
   if (!CONGRESS_API_KEY) {
@@ -59,7 +116,15 @@ export async function GET(request: NextRequest) {
         );
       });
 
-      const mapped = stateMembers.slice(0, 3).map((m: any) => ({
+      // Sort so the House rep comes first, then the two senators.
+      const sorted = stateMembers.sort((a: any, b: any) => {
+        const chA = a.terms?.item?.[a.terms.item.length - 1]?.chamber || '';
+        const chB = b.terms?.item?.[b.terms.item.length - 1]?.chamber || '';
+        if (chA === chB) return 0;
+        return chA.includes('House') ? -1 : 1;
+      });
+
+      const mapped = sorted.slice(0, 3).map((m: any) => ({
         id: m.bioguideId,
         name: m.name,
         party: m.partyName,
@@ -73,30 +138,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ members: mapped, state: stateCode });
     }
 
-    if (type === 'votes' && memberId) {
-      const data = await fetchCongress(`/member/${memberId}/votes`);
-      const votes = (data.votes || []).slice(0, 50).map((v: any) => ({
-        id: v.vote?.rollNumber || Math.random(),
-        bill: v.vote?.bill?.title || v.vote?.description || 'Procedural vote',
-        position: v.memberVote || 'Not Voting',
-        date: v.vote?.date || '',
-        result: v.vote?.result || '',
-        description: v.vote?.description || '',
-      }));
-      return NextResponse.json({ votes });
-    }
-
     if (type === 'bills' && memberId) {
       const data = await fetchCongress(`/member/${memberId}/sponsored-legislation`);
-      const bills = (data.sponsoredLegislation || []).slice(0, 20).map((b: any) => ({
-        id: b.number,
+      const bills = (data.sponsoredLegislation || []).map((b: any) => ({
+        id: `${b.type}${b.number}`,
         title: b.title,
-        number: b.number,
+        number: `${b.type} ${b.number}`,
         introducedDate: b.introducedDate,
         latestAction: b.latestAction?.text || '',
+        latestActionDate: b.latestAction?.actionDate || '',
         policyArea: b.policyArea?.name || '',
+        congress: b.congress,
+        billType: b.type,
+        billNumber: b.number,
       }));
       return NextResponse.json({ bills });
+    }
+
+    if (type === 'votes' && memberId) {
+      if (chamber.includes('Senate')) {
+        const activity = await getSenateActivity(memberId);
+        return NextResponse.json({ votes: activity, isActivity: true });
+      }
+      const votes = await getHouseVotesForMember(memberId, 20);
+      return NextResponse.json({ votes, isActivity: false });
     }
 
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
