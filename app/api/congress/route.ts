@@ -49,12 +49,6 @@ export async function GET(request: NextRequest) {
       const data = await fetchCongress(`/member?currentMember=true`);
       const allMembers: any[] = data.members || [];
 
-      const sample = allMembers.slice(0, 3).map((m: any) => ({
-        name: m.name,
-        state: m.state,
-        party: m.partyName,
-      }));
-
       const stateMembers = allMembers.filter((m: any) => {
         const ms = String(m.state || '').trim();
         return (
@@ -76,18 +70,7 @@ export async function GET(request: NextRequest) {
         nextElection: m.terms?.item?.[m.terms.item.length - 1]?.endYear?.toString() || null,
       }));
 
-      return NextResponse.json({
-        members: mapped,
-        state: stateCode,
-        debug: {
-          zip,
-          stateCode,
-          state,
-          totalMembers: allMembers.length,
-          sample,
-          matchCount: stateMembers.length,
-        }
-      });
+      return NextResponse.json({ members: mapped, state: stateCode });
     }
 
     if (type === 'votes' && memberId) {
