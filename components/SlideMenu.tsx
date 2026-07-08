@@ -24,7 +24,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
   const [reminders, setReminders] = useState(false);
 
   useEffect(() => {
-    if (!open) { setShowSignIn(false); return; }
+    if (!open) { return; }
     if (!user) return;
     fetch('/api/profile')
       .then(r => r.ok ? r.json() : null)
