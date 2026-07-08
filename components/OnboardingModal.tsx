@@ -55,14 +55,6 @@ const STEPS = [
     color: '#5B8C7B',
   },
   {
-    emoji: '📰',
-    title: 'In the news',
-    description:
-      'The news section surfaces current election and civic stories relevant to your ballot. Tap any story to get a plain-language summary of what it means for you as a voter — no jargon, no spin.',
-    cta: 'Got it',
-    color: '#1A2B3D',
-  },
-  {
     emoji: '✅',
     title: 'Voter checklist',
     description:
