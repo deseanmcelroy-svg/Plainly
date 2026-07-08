@@ -3,9 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
-import SignInForm from '@/components/auth/SignInForm';
 import LogoMark from '@/components/LogoMark';
-import WaitlistForm, { isWaitlistDone } from '@/components/WaitlistForm';
 
 interface SlideMenuProps {
   open: boolean;
@@ -18,15 +16,10 @@ interface ProfileData {
   notify_email: string | null;
 }
 
-const supabaseEnabled = !!(
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 export default function SlideMenu({ open, onClose }: SlideMenuProps) {
   const { user, loading, signOut } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
-  const [showSignIn, setShowSignIn] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [reminders, setReminders] = useState(false);
 
@@ -57,6 +50,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
 
   return (
     <>
+      <style>{`.plainly-menu * { color: inherit !important; border-color: rgba(128,128,128,0.2) !important; }`}</style>
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-40 bg-navy/50 backdrop-blur-sm"
@@ -64,8 +58,8 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
       />
 
       {/* Panel */}
-      <div className="fixed inset-y-0 right-0 z-50 flex w-[88vw] max-w-sm flex-col bg-page shadow-2xl"
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div className="fixed inset-y-0 right-0 z-50 flex w-[88vw] max-w-sm flex-col shadow-2xl plainly-menu"
+        style={{ paddingTop: 'env(safe-area-inset-top)', backgroundColor: darkMode ? '#1A2B3D' : '#F7F4ED' }}>
 
         {/* Header */}
         <div className="flex items-start justify-between border-b border-line px-[6vw] py-6">
@@ -88,22 +82,8 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-bold text-navy">Guest</p>
-                  <p className="text-xs text-muted">Sign in to save your location &amp; checklist</p>
-                  {!process.env.NEXT_PUBLIC_HIDE_AUTH && supabaseEnabled && (
-                    <div className="mt-2">
-                      {showSignIn ? (
-                        <SignInForm />
-                      ) : (
-                        <button
-                          onClick={() => setShowSignIn(true)}
-                          className="w-full rounded-xl bg-navy px-4 py-2 text-sm font-semibold text-cream"
-                        >
-                          Sign in
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <p className="text-sm font-bold text-navy">Welcome to Plainly</p>
+                  <p className="text-xs text-muted">Your preferences save automatically on this device</p>
                 </>
               )}
             </div>
