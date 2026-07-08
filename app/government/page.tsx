@@ -47,6 +47,25 @@ export default function GovernmentPage() {
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState('');
   const [error, setError] = useState('');
+  const [zipInput, setZipInput] = useState('');
+
+  function handleZipSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!zipInput.trim()) return;
+    try { localStorage.setItem('plainly-location', zipInput.trim()); } catch {}
+    setLocation(zipInput.trim());
+    setLoading(true);
+    setMembers([]);
+    setError('');
+    fetch('/api/congress?type=members&location=' + encodeURIComponent(zipInput.trim()))
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) setError(d.error);
+        else setMembers(d.members || []);
+      })
+      .catch(() => setError('Could not load representatives.'))
+      .finally(() => setLoading(false));
+  }
 
   useEffect(() => {
     let loc = '';
@@ -74,6 +93,22 @@ export default function GovernmentPage() {
             {location ? `How your representatives have voted · ${location}` : 'How your federal representatives have voted'}
           </p>
         </div>
+
+        <form onSubmit={handleZipSearch} className="mb-6 flex gap-2">
+          <input
+            type="text"
+            value={zipInput}
+            onChange={e => setZipInput(e.target.value)}
+            placeholder={location || 'Enter your ZIP code'}
+            className="flex-1 rounded-xl border-2 border-line bg-card px-4 py-2.5 text-sm text-navy focus:border-terracotta focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="rounded-xl bg-terracotta px-4 py-2.5 text-sm font-bold text-cream"
+          >
+            Search
+          </button>
+        </form>
 
         {loading ? (
           <div className="flex flex-col gap-4">
