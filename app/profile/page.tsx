@@ -147,7 +147,7 @@ export default function ProfilePage() {
           how to vote, and you can clear them anytime.
         </p>
 
-        {user && <DeleteAccountSection />}
+        
       </div>
 
       <Footer />
