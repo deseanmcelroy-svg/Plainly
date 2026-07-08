@@ -13,6 +13,27 @@ async function fetchCongress(path: string, revalidate = 3600) {
   return res.json();
 }
 
+// The /member list endpoint cannot be filtered by state at the request level
+// (confirmed in Congress.gov's own docs), and every page is capped at 250
+// results even though there are ~535 sitting members. A single request was
+// silently missing about half the roster, which is why Ohio's senators never
+// showed up — they simply weren't in the first page returned. This paginates
+// through the full roster before we do our own state/chamber filtering.
+async function getAllCurrentMembers(): Promise<any[]> {
+  const all: any[] = [];
+  let offset = 0;
+  const pageSize = 250;
+  for (let i = 0; i < 5; i++) {
+    // hard cap of 5 pages (1,250 members) as a safety valve
+    const data = await fetchCongress(`/member?currentMember=true&offset=${offset}`, 21600);
+    const page: any[] = data.members || [];
+    all.push(...page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+  return all;
+}
+
 async function getStateFromZip(zip: string): Promise<{ state: string; stateCode: string }> {
   if (!zip || !/^\d{5}$/.test(zip)) return { state: 'Ohio', stateCode: 'OH' };
   try {
@@ -125,8 +146,7 @@ export async function GET(request: NextRequest) {
       const zip = extractZip(location);
       const { state, stateCode } = await getStateFromZip(zip);
 
-      const data = await fetchCongress(`/member?currentMember=true`);
-      const allMembers: any[] = data.members || [];
+      const allMembers = await getAllCurrentMembers();
 
       const stateMatches = allMembers.filter((m: any) => {
         const ms = String(m.state || '').trim();
@@ -152,7 +172,7 @@ export async function GET(request: NextRequest) {
 
       const mapped = [houseMember, ...senators].filter(Boolean).map(mapMember);
 
-      return NextResponse.json({ members: mapped, state: stateCode });
+      return NextResponse.json({ members: mapped, state: stateCode, totalFetched: allMembers.length });
     }
 
     if (type === 'bills' && memberId) {
@@ -170,6 +190,14 @@ export async function GET(request: NextRequest) {
         billNumber: b.number,
       }));
       return NextResponse.json({ bills });
+    }
+
+    // TEMPORARY DEBUG: returns the raw, untouched Congress.gov response for
+    // the house-vote list endpoint. Remove this block once the votes issue
+    // is resolved. Visit /api/congress?type=debug-raw-votes to use it.
+    if (type === 'debug-raw-votes') {
+      const raw = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/${CURRENT_SESSION}`, 0);
+      return NextResponse.json(raw);
     }
 
     if (type === 'votes' && memberId) {
