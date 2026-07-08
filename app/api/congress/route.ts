@@ -34,14 +34,14 @@ function extractZip(input: string): string {
 
 // ---------------------------------------------------------------------------
 // Congress.gov has NO endpoint that returns "all votes cast by member X".
-// The House Roll Call Votes API only works the other direction: fetch a
-// specific vote, then see how every member voted on it. There's also no
+// The House Roll Call Votes API only works the other direction: you fetch a
+// specific vote, then see how every member voted on it. There is also no
 // Senate vote data in this API at all. So for House members we pull the
 // recent vote list, then fetch member-positions for each one (cached, so
-// repeat visits are fast) and derive an attendance rate from real data.
-// Senators get their sponsored bills' latest actions instead.
+// repeat visits are fast). For Senators we fall back to recent legislative
+// activity built from their own sponsored bills' latest actions.
 // ---------------------------------------------------------------------------
-async function getHouseVotesForMember(bioguideId: string, limit = 20) {
+async function getHouseVotesForMember(bioguideId: string, limit = 15) {
   const listData = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/2`, 900);
   const votes: any[] = (listData.houseRollCallVotes || listData.votes || []).slice(0, limit);
 
@@ -71,11 +71,7 @@ async function getHouseVotesForMember(bioguideId: string, limit = 20) {
     })
   );
 
-  const found = results.filter(Boolean) as any[];
-  const votingCount = found.filter((v) => !v.position.toLowerCase().includes('not voting')).length;
-  const attendance = found.length > 0 ? Math.round((votingCount / found.length) * 100) : null;
-
-  return { votes: found, attendance };
+  return results.filter(Boolean);
 }
 
 async function getSenateActivity(bioguideId: string) {
@@ -120,6 +116,7 @@ export async function GET(request: NextRequest) {
         );
       });
 
+      // Sort so the House rep comes first, then the two senators.
       const sorted = stateMembers.sort((a: any, b: any) => {
         const chA = a.terms?.item?.[a.terms.item.length - 1]?.chamber || '';
         const chB = b.terms?.item?.[b.terms.item.length - 1]?.chamber || '';
@@ -161,10 +158,10 @@ export async function GET(request: NextRequest) {
     if (type === 'votes' && memberId) {
       if (chamber.includes('Senate')) {
         const activity = await getSenateActivity(memberId);
-        return NextResponse.json({ votes: activity, isActivity: true, attendance: null });
+        return NextResponse.json({ votes: activity, isActivity: true });
       }
-      const { votes, attendance } = await getHouseVotesForMember(memberId, 20);
-      return NextResponse.json({ votes, isActivity: false, attendance });
+      const votes = await getHouseVotesForMember(memberId, 20);
+      return NextResponse.json({ votes, isActivity: false });
     }
 
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
