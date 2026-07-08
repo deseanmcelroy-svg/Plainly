@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Header from '@/components/Header';
 import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
-import { useAuth } from '@/lib/auth';
 import { useHouseholdProfile } from '@/lib/householdProfile';
 import { HouseholdProfile } from '@/lib/types';
 
@@ -34,7 +33,6 @@ const INCOME_OPTIONS: { value: NonNullable<HouseholdProfile['household_income_ra
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export default function ProfilePage() {
-  const { user, loading: authLoading, supabaseEnabled } = useAuth();
   const { profile, setProfile, loaded } = useHouseholdProfile();
   const [menuOpen, setMenuOpen] = useState(false);
   const [status, setStatus] = useState<SaveStatus>('idle');
@@ -43,20 +41,8 @@ export default function ProfilePage() {
     const next = { ...profile, ...updates };
     setProfile(next);
 
-    if (!user) return; // Guests: changes apply this session only (no API call)
-
-    setStatus('saving');
-    try {
-      const res = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      });
-      setStatus(res.ok ? 'saved' : 'error');
-      if (res.ok) setTimeout(() => setStatus('idle'), 1500);
-    } catch {
-      setStatus('error');
-    }
+    setStatus('saved');
+    setTimeout(() => setStatus('idle'), 1500);
   }
 
   function clearAll() {
@@ -87,16 +73,7 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {!authLoading && !user && supabaseEnabled && !process.env.NEXT_PUBLIC_HIDE_AUTH && (
-          <div className="mt-6 rounded-2xl border border-line bg-card px-5 py-4 text-center text-sm text-muted">
-            You&apos;re not signed in, so these answers will apply for this
-            session only and won&apos;t be saved.{' '}
-            <a href="/" className="text-terracotta underline">
-              Sign in
-            </a>{' '}
-            to save them for next time.
-          </div>
-        )}
+
 
         {loaded && (
           <div className="mt-8 flex flex-col gap-7">
