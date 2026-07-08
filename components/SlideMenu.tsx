@@ -89,22 +89,8 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-bold text-navy dark:text-cream">Guest</p>
-                  <p className="text-xs text-muted dark:text-cream/50">Sign in to save your location &amp; checklist</p>
-                  {!process.env.NEXT_PUBLIC_HIDE_AUTH && supabaseEnabled && (
-                    <div className="mt-2">
-                      {showSignIn ? (
-                        <SignInForm />
-                      ) : (
-                        <button
-                          onClick={() => setShowSignIn(true)}
-                          className="w-full rounded-xl bg-navy px-4 py-2 text-sm font-semibold text-cream"
-                        >
-                          Sign in
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <p className="text-sm font-bold text-navy dark:text-cream">Welcome to Plainly</p>
+                  <p className="text-xs text-muted dark:text-cream/50">Your preferences save automatically on this device</p>
                 </>
               )}
             </div>
