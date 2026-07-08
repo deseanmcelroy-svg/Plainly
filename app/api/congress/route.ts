@@ -42,6 +42,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    if (type === 'debug') {
+      const data = await fetchCongress(`/member?currentMember=true`);
+      const sample = (data.members || []).slice(0, 3).map((m: any) => ({
+        name: m.name,
+        state: m.state,
+        bioguideId: m.bioguideId,
+      }));
+      return NextResponse.json({ sample, total: data.members?.length });
+    }
+
     if (type === 'members') {
       const zip = extractZip(location);
       const { stateCode } = await getStateFromZip(zip);
