@@ -4,17 +4,14 @@ const CONGRESS_API_KEY = process.env.CONGRESS_API_KEY;
 const BASE = 'https://api.congress.gov/v3';
 
 async function fetchCongress(path: string) {
-  const url = `${BASE}${path}${path.includes('?') ? '&' : '?'}api_key=${CONGRESS_API_KEY}&format=json&limit=20`;
+  const sep = path.includes('?') ? '&' : '?';
+  const url = `${BASE}${path}${sep}api_key=${CONGRESS_API_KEY}&format=json&limit=250`;
   const res = await fetch(url, { next: { revalidate: 3600 } });
   if (!res.ok) throw new Error(`Congress API error: ${res.status}`);
   return res.json();
 }
 
-function extractZip(input: string): string {
-  return input.match(/\b(\d{5})\b/)?.[1] || '';
-}
-
-async function getLocationFromZip(zip: string): Promise<{ state: string; stateCode: string }> {
+async function getStateFromZip(zip: string): Promise<{ state: string; stateCode: string }> {
   if (!zip) return { state: 'Ohio', stateCode: 'OH' };
   try {
     const res = await fetch(`https://api.zippopotam.us/us/${zip}`, { next: { revalidate: 86400 } });
@@ -30,6 +27,10 @@ async function getLocationFromZip(zip: string): Promise<{ state: string; stateCo
   }
 }
 
+function extractZip(input: string): string {
+  return input.match(/\b(\d{5})\b/)?.[1] || '';
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const location = searchParams.get('location') || '';
@@ -41,23 +42,25 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const zip = extractZip(location);
-    const { stateCode } = await getLocationFromZip(zip);
-
     if (type === 'members') {
-      const data = await fetchCongress(`/member?stateCode=${stateCode}&currentMember=true`);
-      const members = (data.members || []).slice(0, 3).map((m: any) => ({
-        id: m.bioguideId,
-        name: m.name,
-        party: m.partyName,
-        chamber: m.terms?.item?.[m.terms.item.length - 1]?.chamber || '',
-        state: m.state,
-        district: m.district,
-        url: m.url,
-        depiction: m.depiction?.imageUrl || null,
-        nextElection: m.terms?.item?.[m.terms.item.length - 1]?.endYear || null,
-      }));
-      return NextResponse.json({ members, state: stateCode });
+      const zip = extractZip(location);
+      const { stateCode } = await getStateFromZip(zip);
+      const data = await fetchCongress(`/member?currentMember=true`);
+      const allMembers = data.members || [];
+      const stateMembers = allMembers
+        .filter((m: any) => m.state === stateCode)
+        .slice(0, 3)
+        .map((m: any) => ({
+          id: m.bioguideId,
+          name: m.name,
+          party: m.partyName,
+          chamber: m.terms?.item?.[m.terms.item.length - 1]?.chamber || '',
+          state: m.state,
+          district: m.district,
+          depiction: m.depiction?.imageUrl || null,
+          nextElection: m.terms?.item?.[m.terms.item.length - 1]?.endYear?.toString() || null,
+        }));
+      return NextResponse.json({ members: stateMembers, state: stateCode });
     }
 
     if (type === 'votes' && memberId) {
@@ -65,7 +68,6 @@ export async function GET(request: NextRequest) {
       const votes = (data.votes || []).slice(0, 50).map((v: any) => ({
         id: v.vote?.rollNumber || Math.random(),
         bill: v.vote?.bill?.title || v.vote?.description || 'Procedural vote',
-        billNumber: v.vote?.bill?.number || '',
         position: v.memberVote || 'Not Voting',
         date: v.vote?.date || '',
         result: v.vote?.result || '',
@@ -82,8 +84,6 @@ export async function GET(request: NextRequest) {
         number: b.number,
         introducedDate: b.introducedDate,
         latestAction: b.latestAction?.text || '',
-        latestActionDate: b.latestAction?.actionDate || '',
-        url: b.url,
         policyArea: b.policyArea?.name || '',
       }));
       return NextResponse.json({ bills });
