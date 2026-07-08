@@ -26,7 +26,7 @@ const STEPS = [
     emoji: '🏠',
     title: 'Make it personal',
     description:
-      'Fill out your optional household profile. Plainly uses your age range, housing status, income bracket, and whether you have school-age kids to estimate how ballot measures could affect your household in dollars and cents.',
+      'Fill out your optional household profile — age range, housing status, income, and whether you have school-age kids. Plainly uses these to estimate how ballot measures could affect your household in dollars and cents. Your answers save automatically on this device.',
     cta: 'Got it',
     color: '#5B8C7B',
   },
@@ -53,6 +53,14 @@ const STEPS = [
       "The leadership explainer covers 13 government roles. The civic glossary defines 39 terms like levy, canvass, and plurality with real-world examples. Every ballot race links to a how-does-this-get-decided page covering voting mechanics and certification.",
     cta: 'Got it',
     color: '#5B8C7B',
+  },
+  {
+    emoji: '📰',
+    title: 'In the news',
+    description:
+      'The news section surfaces current election and civic stories relevant to your ballot. Tap any story to get a plain-language summary of what it means for you as a voter — no jargon, no spin.',
+    cta: 'Got it',
+    color: '#1A2B3D',
   },
   {
     emoji: '✅',
