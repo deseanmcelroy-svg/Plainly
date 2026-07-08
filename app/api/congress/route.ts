@@ -12,7 +12,7 @@ async function fetchCongress(path: string) {
 }
 
 async function getStateFromZip(zip: string): Promise<{ state: string; stateCode: string }> {
-  if (!zip) return { state: 'Ohio', stateCode: 'OH' };
+  if (!zip || !/^\d{5}$/.test(zip)) return { state: 'Ohio', stateCode: 'OH' };
   try {
     const res = await fetch(`https://api.zippopotam.us/us/${zip}`, { next: { revalidate: 86400 } });
     if (!res.ok) return { state: 'Ohio', stateCode: 'OH' };
@@ -42,47 +42,52 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    if (type === 'debug') {
-      const data = await fetchCongress(`/member?currentMember=true`);
-      const sample = (data.members || []).slice(0, 3).map((m: any) => ({
-        name: m.name,
-        state: m.state,
-        bioguideId: m.bioguideId,
-      }));
-      return NextResponse.json({ sample, total: data.members?.length });
-    }
-
     if (type === 'members') {
       const zip = extractZip(location);
       const { state, stateCode } = await getStateFromZip(zip);
 
-      // Fetch all members and try multiple state format matches
       const data = await fetchCongress(`/member?currentMember=true`);
-      const allMembers = data.members || [];
+      const allMembers: any[] = data.members || [];
 
-      const stateMembers = allMembers
-        .filter((m: any) => {
-          const ms = String(m.state || '').trim().toLowerCase();
-          return ms === stateCode.toLowerCase() ||
-                 ms === state.toLowerCase() ||
-                 ms === stateCode.toLowerCase().replace(/[^a-z]/g,'');
-        })
-        .slice(0, 3)
-        .map((m: any) => ({
-          id: m.bioguideId,
-          name: m.name,
-          party: m.partyName,
-          chamber: m.terms?.item?.[m.terms.item.length - 1]?.chamber || '',
-          state: m.state,
-          district: m.district,
-          depiction: m.depiction?.imageUrl || null,
-          nextElection: m.terms?.item?.[m.terms.item.length - 1]?.endYear?.toString() || null,
-          rawState: m.state,
-        }));
+      const sample = allMembers.slice(0, 3).map((m: any) => ({
+        name: m.name,
+        state: m.state,
+        party: m.partyName,
+      }));
 
-      // If still empty return debug info
-      const debugSample = allMembers.slice(0,3).map((m:any) => ({ name: m.name, state: m.state }));
-      return NextResponse.json({ members: stateMembers, state: stateCode, debug: stateMembers.length === 0 ? debugSample : undefined });
+      const stateMembers = allMembers.filter((m: any) => {
+        const ms = String(m.state || '').trim();
+        return (
+          ms === stateCode ||
+          ms === state ||
+          ms.toLowerCase() === stateCode.toLowerCase() ||
+          ms.toLowerCase() === state.toLowerCase()
+        );
+      });
+
+      const mapped = stateMembers.slice(0, 3).map((m: any) => ({
+        id: m.bioguideId,
+        name: m.name,
+        party: m.partyName,
+        chamber: m.terms?.item?.[m.terms.item.length - 1]?.chamber || '',
+        state: m.state,
+        district: m.district,
+        depiction: m.depiction?.imageUrl || null,
+        nextElection: m.terms?.item?.[m.terms.item.length - 1]?.endYear?.toString() || null,
+      }));
+
+      return NextResponse.json({
+        members: mapped,
+        state: stateCode,
+        debug: {
+          zip,
+          stateCode,
+          state,
+          totalMembers: allMembers.length,
+          sample,
+          matchCount: stateMembers.length,
+        }
+      });
     }
 
     if (type === 'votes' && memberId) {
