@@ -27,19 +27,30 @@ interface VoteOrActivity {
 }
 
 interface MemberData {
-  member: Member;
   billsCount: number;
   recentVotes: VoteOrActivity[];
   isActivity: boolean;
+  attendance: number | null;
   loading: boolean;
   error: string;
 }
 
-const PARTY_COLOR: Record<string, string> = {
-  Republican: '#C04A1A',
-  Democratic: '#2D4FB5',
-  Independent: '#5B8C7B',
+const PARTY_ACCENT: Record<string, string> = {
+  Republican: '#D9663E',
+  Democratic: '#5B8FD9',
+  Independent: '#8FBFA8',
 };
+
+function isYes(position: string | null): boolean {
+  if (!position) return false;
+  const p = position.toLowerCase();
+  return p.includes('yea') || p.includes('yes') || p.includes('aye');
+}
+
+function eyebrowFor(m: Member, index: number, senatorCount: number): string {
+  if (m.chamber.includes('House')) return 'Your U.S. House Representative';
+  return senatorCount > 1 ? `Your U.S. Senator ${index}` : 'Your U.S. Senator';
+}
 
 export default function GovernmentPage() {
   const router = useRouter();
@@ -77,11 +88,10 @@ export default function GovernmentPage() {
       setMembers(found);
       setLoading(false);
 
-      // Load bills + votes/activity for each member in parallel.
       found.forEach((m) => {
         setMemberData((prev) => ({
           ...prev,
-          [m.id]: { member: m, billsCount: 0, recentVotes: [], isActivity: false, loading: true, error: '' },
+          [m.id]: { billsCount: 0, recentVotes: [], isActivity: false, attendance: null, loading: true, error: '' },
         }));
 
         Promise.all([
@@ -94,10 +104,10 @@ export default function GovernmentPage() {
             setMemberData((prev) => ({
               ...prev,
               [m.id]: {
-                member: m,
                 billsCount: (billsRes.bills || []).length,
-                recentVotes: (votesRes.votes || []).slice(0, 3),
+                recentVotes: (votesRes.votes || []).slice(0, 2),
                 isActivity: !!votesRes.isActivity,
+                attendance: votesRes.attendance ?? null,
                 loading: false,
                 error: billsRes.error || votesRes.error || '',
               },
@@ -106,7 +116,7 @@ export default function GovernmentPage() {
           .catch(() => {
             setMemberData((prev) => ({
               ...prev,
-              [m.id]: { member: m, billsCount: 0, recentVotes: [], isActivity: false, loading: false, error: 'Could not load.' },
+              [m.id]: { billsCount: 0, recentVotes: [], isActivity: false, attendance: null, loading: false, error: 'Could not load.' },
             }));
           });
       });
@@ -126,22 +136,33 @@ export default function GovernmentPage() {
     loadMembers(zipInput.trim());
   }
 
+  function isOnBallotThisCycle(nextElection: string | null): boolean {
+    if (!nextElection) return false;
+    const year = parseInt(nextElection, 10);
+    const currentYear = new Date().getFullYear();
+    return year - currentYear <= 1;
+  }
+
+  const senatorCount = members.filter((m) => m.chamber.includes('Senate')).length;
+  let senatorIndex = 0;
+
   return (
     <main className="min-h-screen bg-page">
       <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
       <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
 
-      <div className="mx-auto max-w-2xl px-[6vw] pb-16">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-bold text-navy">Grade your government</h1>
-          <p className="mt-1 text-sm text-muted">
-            {location
-              ? `Your federal representatives · ${location}`
-              : 'See how your federal representatives are doing'}
+      {/* Hero */}
+      <div className="bg-navy px-[6vw] py-10">
+        <div className="mx-auto max-w-2xl">
+          <h1 className="font-display text-4xl font-bold text-cream">Grade your government</h1>
+          <p className="mt-2 text-base text-cream/60">
+            {location ? `How your representatives have voted · ${location}` : 'How your representatives have voted'}
           </p>
         </div>
+      </div>
 
-        <form onSubmit={handleZipSearch} className="mb-6 flex gap-2">
+      <div className="mx-auto max-w-2xl px-[6vw] pb-16 pt-8">
+        <form onSubmit={handleZipSearch} className="mb-8 flex gap-2">
           <input
             type="text"
             value={zipInput}
@@ -155,109 +176,189 @@ export default function GovernmentPage() {
         </form>
 
         {loading ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-8">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-56 animate-pulse rounded-2xl bg-card" />
+              <div key={i} className="h-72 animate-pulse rounded-2xl bg-card" />
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-2xl bg-card p-8 text-center">
-            <p className="text-muted">{error}</p>
-          </div>
+          <div className="rounded-2xl bg-card p-8 text-center text-muted">{error}</div>
         ) : members.length === 0 ? (
-          <div className="rounded-2xl bg-card p-8 text-center">
-            <p className="text-muted">No representatives found for that ZIP code.</p>
-          </div>
+          <div className="rounded-2xl bg-card p-8 text-center text-muted">No representatives found for that ZIP code.</div>
         ) : (
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-10">
             {members.map((m) => {
               const d = memberData[m.id];
-              const color = PARTY_COLOR[m.party] || '#1A2B3D';
+              const accent = PARTY_ACCENT[m.party] || '#8FBFA8';
+              if (m.chamber.includes('Senate')) senatorIndex += 1;
+              const eyebrow = eyebrowFor(m, senatorIndex, senatorCount);
+              const onBallot = isOnBallotThisCycle(m.nextElection);
+
               return (
-                <div key={m.id} className="overflow-hidden rounded-2xl bg-card border border-line">
-                  <div className="flex gap-4 p-5">
-                    {m.depiction ? (
-                      <img src={m.depiction} alt={m.name} className="h-20 w-20 flex-shrink-0 rounded-xl object-cover" />
-                    ) : (
-                      <div
-                        className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl text-2xl font-bold text-white"
-                        style={{ background: color }}
-                      >
-                        {m.name?.[0] || '?'}
+                <div key={m.id}>
+                  <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{eyebrow}</p>
+
+                  <div className="overflow-hidden rounded-2xl border border-line">
+                    {/* Dark header block */}
+                    <div className="flex items-center gap-4 bg-navy px-5 py-5">
+                      {m.depiction ? (
+                        <img src={m.depiction} alt={m.name} className="h-14 w-14 flex-shrink-0 rounded-full object-cover" />
+                      ) : (
+                        <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-green text-lg font-bold text-white">
+                          {m.name
+                            ?.split(',')[0]
+                            ?.trim()
+                            ?.split(' ')
+                            .map((w) => w[0])
+                            .join('')
+                            .slice(0, 2) || '?'}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <h2 className="text-lg font-bold leading-snug text-cream">
+                          {m.chamber.includes('House') ? 'Rep. ' : 'Sen. '}
+                          {m.name}
+                        </h2>
+                        <p className="text-sm text-cream/60">
+                          {m.chamber.includes('House')
+                            ? `${m.state}'s ${m.district}${ordinalSuffix(m.district)} Congressional District`
+                            : `${m.state}`}
+                        </p>
                       </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-lg font-bold text-navy leading-snug">{m.name}</h2>
-                      <p className="text-sm" style={{ color }}>
-                        {m.party} · {m.chamber === 'Senate' ? 'Senator' : `Representative, District ${m.district ?? ''}`}
-                      </p>
+                      <span
+                        className="flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold"
+                        style={{ background: `${accent}33`, color: accent }}
+                      >
+                        {m.party}
+                      </span>
+                    </div>
+
+                    {/* Cream body block */}
+                    <div className="bg-card">
                       {m.nextElection && (
-                        <p className="mt-1 text-xs text-muted">Up for reelection in {m.nextElection}</p>
+                        <div className="flex gap-3 border-b border-line px-5 py-4">
+                          <span className="text-lg">📅</span>
+                          <p className="text-sm font-bold text-terracotta">
+                            Up for reelection in {m.nextElection}
+                            {onBallot && ' — on your ballot this cycle'}
+                          </p>
+                        </div>
+                      )}
+
+                      {d?.loading ? (
+                        <div className="px-5 py-6">
+                          <div className="h-4 w-2/3 animate-pulse rounded bg-line" />
+                        </div>
+                      ) : d?.error ? (
+                        <div className="px-5 py-6 text-sm text-muted">Couldn't load activity for this member.</div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-3 divide-x divide-line px-2 py-5 text-center">
+                            {!d?.isActivity && d?.attendance !== null && (
+                              <div>
+                                <div className="text-2xl font-bold text-navy">{d?.attendance}%</div>
+                                <div className="text-xs text-muted">Attendance</div>
+                              </div>
+                            )}
+                            <button
+                              onClick={() =>
+                                router.push(`/government/${m.id}?type=bills&chamber=${encodeURIComponent(m.chamber)}`)
+                              }
+                              className={d?.isActivity || d?.attendance === null ? 'col-span-1' : ''}
+                            >
+                              <div className="text-2xl font-bold text-terracotta">{d?.billsCount ?? 0}</div>
+                              <div className="text-xs text-muted">Bills sponsored</div>
+                              <div className="text-xs font-semibold text-terracotta">Tap to view all</div>
+                            </button>
+                            <button
+                              onClick={() =>
+                                router.push(`/government/${m.id}?type=votes&chamber=${encodeURIComponent(m.chamber)}`)
+                              }
+                            >
+                              <div className="text-2xl font-bold text-terracotta">{d?.recentVotes.length ?? 0}</div>
+                              <div className="text-xs text-muted">{d?.isActivity ? 'Recent activity' : 'Votes cast'}</div>
+                              <div className="text-xs font-semibold text-terracotta">Tap to view all</div>
+                            </button>
+                          </div>
+
+                          {!d?.isActivity && d?.attendance !== null && (
+                            <div className="px-5 pb-5">
+                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
+                                <div
+                                  className="h-full rounded-full bg-green"
+                                  style={{ width: `${d?.attendance}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
 
-                  {d?.loading ? (
-                    <div className="border-t border-line px-5 py-4">
-                      <div className="h-4 w-2/3 animate-pulse rounded bg-line" />
-                    </div>
-                  ) : d?.error ? (
-                    <div className="border-t border-line px-5 py-4 text-sm text-muted">Couldn't load activity for this member.</div>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-2 gap-px border-t border-line bg-line">
-                        <button
-                          onClick={() => router.push(`/government/${m.id}?type=bills&chamber=${encodeURIComponent(m.chamber)}`)}
-                          className="bg-card px-4 py-3 text-left hover:bg-page"
-                        >
-                          <div className="text-xl font-bold text-navy">{d?.billsCount ?? 0}</div>
-                          <div className="text-xs font-semibold text-muted">Bills sponsored →</div>
-                        </button>
-                        <button
-                          onClick={() => router.push(`/government/${m.id}?type=votes&chamber=${encodeURIComponent(m.chamber)}`)}
-                          className="bg-card px-4 py-3 text-left hover:bg-page"
-                        >
-                          <div className="text-xl font-bold text-navy">{d?.recentVotes.length ?? 0}</div>
-                          <div className="text-xs font-semibold text-muted">
-                            {d?.isActivity ? 'Recent activity →' : 'Votes cast →'}
+                  {(d?.recentVotes?.length ?? 0) > 0 && (
+                    <div className="mt-5">
+                      <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted">
+                        {d?.isActivity ? 'Recent activity' : 'Recent votes'}
+                      </p>
+                      <div className="flex flex-col gap-3">
+                        {d?.recentVotes.map((v) => (
+                          <div key={v.id} className="rounded-2xl bg-card p-5">
+                            <div className="flex items-start gap-3">
+                              {v.position && (
+                                <span
+                                  className="mt-0.5 flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-bold"
+                                  style={{
+                                    background: isYes(v.position) ? '#E8F4F0' : '#FFF0EB',
+                                    color: isYes(v.position) ? '#2D7A65' : '#C04A1A',
+                                  }}
+                                >
+                                  {isYes(v.position) ? 'YES' : 'NO'}
+                                </span>
+                              )}
+                              <h3 className="text-base font-bold leading-snug text-navy">{v.bill}</h3>
+                            </div>
+                            {v.description && <p className="mt-2 text-sm text-muted leading-relaxed">{v.description}</p>}
+                            <button
+                              onClick={() => {
+                                const q = new URLSearchParams({
+                                  title: v.bill,
+                                  description: v.description || '',
+                                  billNumber: v.bill,
+                                  position: v.position || '',
+                                  latestAction: v.result || '',
+                                  location,
+                                });
+                                router.push(`/government/detail?${q.toString()}`);
+                              }}
+                              className="mt-3 text-sm font-bold text-terracotta"
+                            >
+                              What this means for you →
+                            </button>
                           </div>
-                        </button>
+                        ))}
                       </div>
-
-                      {(d?.recentVotes.length ?? 0) > 0 && (
-                        <div className="border-t border-line px-5 py-4">
-                          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">
-                            {d?.isActivity ? 'Recent legislative activity' : 'Recent votes'}
-                          </p>
-                          <div className="flex flex-col gap-2">
-                            {d?.recentVotes.map((v) => (
-                              <div key={v.id} className="text-sm text-navy">
-                                <span className="font-semibold">{v.bill}</span>
-                                {v.position && (
-                                  <span
-                                    className="ml-2 rounded-full px-2 py-0.5 text-xs font-bold"
-                                    style={{
-                                      background: v.position.toLowerCase().includes('yea') || v.position.toLowerCase().includes('yes') ? '#E8F4F0' : '#FFF0EB',
-                                      color: v.position.toLowerCase().includes('yea') || v.position.toLowerCase().includes('yes') ? '#2D7A65' : '#C04A1A',
-                                    }}
-                                  >
-                                    {v.position}
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
+                    </div>
                   )}
                 </div>
               );
             })}
           </div>
         )}
+
+        <p className="mt-10 text-center text-sm text-muted">Source: Congress.gov API</p>
       </div>
       <Footer />
     </main>
   );
+}
+
+function ordinalSuffix(n: number | null): string {
+  if (n === null || n === undefined) return '';
+  const j = n % 10;
+  const k = n % 100;
+  if (j === 1 && k !== 11) return 'st';
+  if (j === 2 && k !== 12) return 'nd';
+  if (j === 3 && k !== 13) return 'rd';
+  return 'th';
 }
