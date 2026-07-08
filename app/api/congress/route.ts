@@ -54,11 +54,19 @@ export async function GET(request: NextRequest) {
 
     if (type === 'members') {
       const zip = extractZip(location);
-      const { stateCode } = await getStateFromZip(zip);
+      const { state, stateCode } = await getStateFromZip(zip);
+
+      // Fetch all members and try multiple state format matches
       const data = await fetchCongress(`/member?currentMember=true`);
       const allMembers = data.members || [];
+
       const stateMembers = allMembers
-        .filter((m: any) => m.state === stateCode)
+        .filter((m: any) => {
+          const ms = String(m.state || '').trim().toLowerCase();
+          return ms === stateCode.toLowerCase() ||
+                 ms === state.toLowerCase() ||
+                 ms === stateCode.toLowerCase().replace(/[^a-z]/g,'');
+        })
         .slice(0, 3)
         .map((m: any) => ({
           id: m.bioguideId,
@@ -69,8 +77,12 @@ export async function GET(request: NextRequest) {
           district: m.district,
           depiction: m.depiction?.imageUrl || null,
           nextElection: m.terms?.item?.[m.terms.item.length - 1]?.endYear?.toString() || null,
+          rawState: m.state,
         }));
-      return NextResponse.json({ members: stateMembers, state: stateCode });
+
+      // If still empty return debug info
+      const debugSample = allMembers.slice(0,3).map((m:any) => ({ name: m.name, state: m.state }));
+      return NextResponse.json({ members: stateMembers, state: stateCode, debug: stateMembers.length === 0 ? debugSample : undefined });
     }
 
     if (type === 'votes' && memberId) {
