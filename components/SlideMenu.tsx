@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
-import SignInForm from '@/components/auth/SignInForm';
+
 import LogoMark from '@/components/LogoMark';
 import WaitlistForm, { isWaitlistDone } from '@/components/WaitlistForm';
 
@@ -18,10 +18,6 @@ interface ProfileData {
   notify_email: string | null;
 }
 
-const supabaseEnabled = !!(
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 export default function SlideMenu({ open, onClose }: SlideMenuProps) {
   const { user, loading, signOut } = useAuth();
@@ -89,22 +85,8 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-bold text-navy">Guest</p>
-                  <p className="text-xs text-muted">Sign in to save your location &amp; checklist</p>
-                  {!process.env.NEXT_PUBLIC_HIDE_AUTH && supabaseEnabled && (
-                    <div className="mt-2">
-                      {showSignIn ? (
-                        <SignInForm />
-                      ) : (
-                        <button
-                          onClick={() => setShowSignIn(true)}
-                          className="w-full rounded-xl bg-navy px-4 py-2 text-sm font-semibold text-cream"
-                        >
-                          Sign in
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <p className="text-sm font-bold" style={{color:"inherit"}}>Welcome to Plainly</p>
+                  <p className="text-xs" style={{color:"inherit",opacity:0.6}}>Your preferences save automatically on this device</p>
                 </>
               )}
             </div>

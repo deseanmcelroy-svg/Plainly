@@ -52,7 +52,8 @@ export default function GovernmentPage() {
     let loc = '';
     try { loc = localStorage.getItem('plainly-location') || ''; } catch {}
     setLocation(loc);
-    fetch('/api/congress?type=members&location=' + encodeURIComponent(loc))
+    const queryLoc = loc || 'Ohio';
+    fetch('/api/congress?type=members&location=' + encodeURIComponent(queryLoc))
       .then(r => r.json())
       .then(d => {
         if (d.error) setError(d.error);
