@@ -205,9 +205,41 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ members: mapped, state: stateCode, zipUsed: zip || '(none, defaulted)' });
     }
 
-    if (type === 'debug-raw-member-detail' && memberId) {
-      const raw = await fetchCongress(`/member/${memberId}`, 0);
-      return NextResponse.json(raw);
+    if (type === 'bio' && memberId) {
+      const data = await fetchCongress(`/member/${memberId}`, 21600);
+      const m = data.member;
+      if (!m) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+
+      const terms = (m.terms || []).slice().sort((a: any, b: any) => (a.startYear || 0) - (b.startYear || 0));
+      const firstTermYear = terms[0]?.startYear || null;
+      const chambersServed = Array.from(new Set(terms.map((t: any) => t.chamber))) as string[];
+      const currentYear = new Date().getFullYear();
+      const yearsServed = firstTermYear ? currentYear - firstTermYear : null;
+
+      const leadership = (m.leadership || []).map((l: any) => ({
+        type: l.type,
+        congress: l.congress,
+        isCurrent: l.current ?? l.isCurrent ?? false,
+      }));
+
+      const partyHistory = (m.partyHistory || []).map((p: any) => ({
+        party: p.partyName,
+        startYear: p.startYear,
+      }));
+
+      return NextResponse.json({
+        bioguideId: m.bioguideId,
+        name: m.directOrderName || m.invertedOrderName,
+        birthYear: m.birthYear || null,
+        website: m.officialWebsiteUrl || null,
+        firstTermYear,
+        termCount: terms.length,
+        chambersServed,
+        yearsServed,
+        leadership,
+        partyHistory,
+        currentlySwitchedParty: partyHistory.length > 1,
+      });
     }
 
     if (type === 'bills-sponsored-count' && memberId) {
