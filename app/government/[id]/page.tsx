@@ -26,6 +26,7 @@ interface Bio {
   leadership: { type: string; congress: number; isCurrent: boolean }[];
   partyHistory: { party: string; startYear: number }[];
   currentlySwitchedParty: boolean;
+  cosponsoredCount: number | null;
 }
 
 function ordinal(n: number): string {
@@ -92,6 +93,7 @@ function MemberDetailContent() {
   const [mostRecent, setMostRecent] = useState<VoteOrActivity | null>(null);
   const [bio, setBio] = useState<Bio | null>(null);
   const [bioLoading, setBioLoading] = useState(true);
+  const [policyAreas, setPolicyAreas] = useState<string[]>([]);
   const [isActivity, setIsActivity] = useState(false);
   const [attendance, setAttendance] = useState<number | null>(null);
   const [billsCount, setBillsCount] = useState<number | null>(null);
@@ -106,6 +108,11 @@ function MemberDetailContent() {
       .then((d) => setBio(d.error ? null : d))
       .catch(() => setBio(null))
       .finally(() => setBioLoading(false));
+
+    fetch(`/api/congress?type=policy-areas&memberId=${memberId}`)
+      .then((r) => r.json())
+      .then((d) => setPolicyAreas(d.policyAreas || []))
+      .catch(() => {});
   }, [memberId]);
 
   useEffect(() => {
@@ -203,7 +210,7 @@ function MemberDetailContent() {
             <div className="flex flex-col px-4">
               {bio?.firstTermYear && (
                 <div className="flex items-center gap-2.5 border-b border-line/60 py-2.5">
-                  <div className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-lg bg-[#EAF3DE]">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#EAF3DE]">
                     <span className="text-sm">📅</span>
                   </div>
                   <div>
@@ -220,7 +227,7 @@ function MemberDetailContent() {
 
               {bio && bio.chambersServed.length > 1 && (
                 <div className="flex items-center gap-2.5 border-b border-line/60 py-2.5">
-                  <div className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-lg bg-[#EEF3F8]">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#EEF3F8]">
                     <span className="text-sm">🏛️</span>
                   </div>
                   <div className="text-[13px] font-semibold text-navy">
@@ -231,7 +238,7 @@ function MemberDetailContent() {
 
               {bio && bio.leadership.length > 0 && (
                 <div className="flex items-center gap-2.5 border-b border-line/60 py-2.5">
-                  <div className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-lg bg-[#FFF0EB]">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#FFF0EB]">
                     <span className="text-sm">⭐</span>
                   </div>
                   <div className="text-[13px] font-semibold text-navy">
@@ -242,7 +249,7 @@ function MemberDetailContent() {
 
               {repNextElection && (
                 <div className="flex items-center gap-2.5 border-b border-line/60 py-2.5">
-                  <div className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-lg bg-[#EEF3F8]">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#EEF3F8]">
                     <span className="text-sm">🗳️</span>
                   </div>
                   <div>
@@ -256,13 +263,26 @@ function MemberDetailContent() {
 
               {bio?.birthYear && (
                 <div className="flex items-center gap-2.5 py-2.5">
-                  <div className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-lg bg-[#F4F2EA]">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#F4F2EA]">
                     <span className="text-sm">🎂</span>
                   </div>
                   <div className="text-[13px] font-semibold text-navy">Born {bio.birthYear}</div>
                 </div>
               )}
             </div>
+
+            {policyAreas.length > 0 && (
+              <div className="border-t border-line/60 px-4 py-3">
+                <div className="mb-2 text-xs font-bold uppercase tracking-widest text-muted">Policy focus</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {policyAreas.map((area) => (
+                    <span key={area} className="rounded-full bg-[#F4F2EA] px-2.5 py-1 text-[11px] font-semibold text-navy">
+                      {area}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {bio?.website && (
               <a
@@ -287,17 +307,26 @@ function MemberDetailContent() {
         ) : (
           <>
             {!isActivity && (
-              <div className="mb-4 grid grid-cols-2 gap-2.5">
+              <div className="mb-4 grid grid-cols-3 gap-2.5">
                 {billsCount !== null && (
                   <div className="rounded-2xl bg-card p-3 text-center shadow-sm">
                     <div className="font-display text-xl font-bold text-terracotta">{billsCount}</div>
-                    <div className="text-[11px] text-muted">Bills sponsored</div>
+                    <div className="text-[11px] text-muted">Sponsored</div>
+                  </div>
+                )}
+                {bio?.cosponsoredCount != null && (
+                  <div className="rounded-2xl bg-card p-3 text-center shadow-sm">
+                    <div className="font-display text-xl font-bold text-[#378ADD]">{bio.cosponsoredCount}</div>
+                    <div className="text-[11px] text-muted">Cosponsored</div>
                   </div>
                 )}
                 {attendance !== null && (
                   <div className="rounded-2xl bg-card p-3 text-center shadow-sm">
                     <div className="font-display text-xl font-bold text-green">{attendance}%</div>
                     <div className="text-[11px] text-muted">Attendance</div>
+                    <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-line">
+                      <div className="h-full rounded-full bg-green" style={{ width: `${attendance}%` }} />
+                    </div>
                   </div>
                 )}
               </div>

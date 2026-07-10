@@ -154,16 +154,34 @@ async function getSenateActivity(bioguideId: string) {
     }));
 }
 
+function computeNextElection(chamber: string, lastTermStartYear: number | null): string | null {
+  const currentYear = new Date().getFullYear();
+  if (chamber.includes('House')) {
+    // House seats are up every even year, no exceptions.
+    return String(currentYear % 2 === 0 ? currentYear : currentYear + 1);
+  }
+  if (chamber.includes('Senate') && lastTermStartYear) {
+    // Senate terms are a fixed 6 years. A term starting in year X means the
+    // seat was won in the November of X-1, and comes up again 6 years later.
+    let electionYear = lastTermStartYear + 5;
+    while (electionYear < currentYear) electionYear += 6;
+    return String(electionYear);
+  }
+  return null;
+}
+
 function mapMember(m: any) {
+  const lastTerm = m.terms?.item?.[m.terms.item.length - 1];
+  const chamber = lastTerm?.chamber || '';
   return {
     id: m.bioguideId,
     name: m.name,
     party: m.partyName,
-    chamber: m.terms?.item?.[m.terms.item.length - 1]?.chamber || '',
+    chamber,
     state: m.state,
     district: m.district,
     depiction: m.depiction?.imageUrl || null,
-    nextElection: m.terms?.item?.[m.terms.item.length - 1]?.endYear?.toString() || null,
+    nextElection: computeNextElection(chamber, lastTerm?.startYear || null),
   };
 }
 
@@ -239,7 +257,23 @@ export async function GET(request: NextRequest) {
         leadership,
         partyHistory,
         currentlySwitchedParty: partyHistory.length > 1,
+        cosponsoredCount: m.cosponsoredLegislation?.count ?? null,
       });
+    }
+
+    if (type === 'policy-areas' && memberId) {
+      const data = await fetchCongress(`/member/${memberId}/sponsored-legislation`);
+      const bills: any[] = data.sponsoredLegislation || [];
+      const counts: Record<string, number> = {};
+      for (const b of bills) {
+        const area = b.policyArea?.name;
+        if (area) counts[area] = (counts[area] || 0) + 1;
+      }
+      const top = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 4)
+        .map(([name]) => name);
+      return NextResponse.json({ policyAreas: top });
     }
 
     if (type === 'bills-sponsored-count' && memberId) {
