@@ -197,6 +197,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    if (type === 'debug-raw-census') {
+      const zip = searchParams.get('zip') || '44721';
+      const url = `https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(zip)}&benchmark=4&vintage=4&format=json`;
+      const res = await fetch(url);
+      const raw = await res.json();
+      return NextResponse.json({ requestedUrl: url, status: res.status, raw });
+    }
+
     if (type === 'members') {
       const zip = extractZip(location);
       const { state, stateCode } = getStateFromZip(zip);
@@ -295,4 +303,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: e.message || 'Failed' }, { status: 500 });
   }
 }
-
