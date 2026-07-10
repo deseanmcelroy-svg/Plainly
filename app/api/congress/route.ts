@@ -74,7 +74,14 @@ function extractZip(input: string): string {
 // outbound calls instead of 25 — which is what was making the page slow.)
 async function getHouseVoteData(bioguideId: string, limit = 20) {
   const listData = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/${CURRENT_SESSION}`, 900);
-  const recent: any[] = (listData.houseRollCallVotes || []).slice(0, limit);
+  const allVotes: any[] = listData.houseRollCallVotes || [];
+
+  // Congress.gov does not return this list in chronological order (verified:
+  // roll call numbers come back scattered, e.g. 74, 72, 71, 77...). Sorting
+  // by roll call number descending is the closest reliable proxy for "most
+  // recent" since roll calls increment sequentially within a session.
+  const sorted = allVotes.slice().sort((a, b) => (b.rollCallNumber || 0) - (a.rollCallNumber || 0));
+  const recent = sorted.slice(0, limit);
 
   const results = await Promise.all(
     recent.map(async (v: any) => {
@@ -203,7 +210,7 @@ export async function GET(request: NextRequest) {
         const activity = await getSenateActivity(memberId);
         return NextResponse.json({ votes: activity, isActivity: true, attendance: null });
       }
-      const { votes, attendance } = await getHouseVoteData(memberId, 20);
+      const { votes, attendance } = await getHouseVoteData(memberId, 30);
       return NextResponse.json({ votes, isActivity: false, attendance });
     }
 
