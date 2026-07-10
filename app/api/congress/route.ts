@@ -206,14 +206,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (type === 'debug-raw-fec') {
-      const office = searchParams.get('office') || 'H';
+      const office = searchParams.get('office') || 'house';
       const state = searchParams.get('state') || 'OH';
       const district = searchParams.get('district') || '02';
       const cycle = searchParams.get('cycle') || '2024';
       const FEC_KEY = process.env.FEC_API_KEY;
       if (!FEC_KEY) return NextResponse.json({ error: 'FEC_API_KEY not set' }, { status: 503 });
       const params = new URLSearchParams({ office, state, cycle, api_key: FEC_KEY });
-      if (office === 'H') params.set('district', district);
+      if (office === 'house') params.set('district', district);
       const url = `https://api.open.fec.gov/v1/elections/?${params.toString()}`;
       const res = await fetch(url);
       const raw = await res.json();
