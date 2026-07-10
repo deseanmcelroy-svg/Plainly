@@ -199,10 +199,20 @@ export async function GET(request: NextRequest) {
   try {
     if (type === 'debug-raw-census') {
       const zip = searchParams.get('zip') || '44721';
-      const url = `https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(zip)}&benchmark=4&vintage=4&format=json`;
-      const res = await fetch(url);
-      const raw = await res.json();
-      return NextResponse.json({ requestedUrl: url, status: res.status, raw });
+      const centroidUrl = `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/4/query?where=ZCTA5='${zip}'&outFields=CENTLAT,CENTLON&f=json`;
+      const centroidRes = await fetch(centroidUrl);
+      const centroidRaw = await centroidRes.json();
+      const lat = centroidRaw.features?.[0]?.attributes?.CENTLAT;
+      const lon = centroidRaw.features?.[0]?.attributes?.CENTLON;
+
+      let districtRaw = null;
+      if (lat && lon) {
+        const districtUrl = `https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=${lon}&y=${lat}&benchmark=4&vintage=4&format=json`;
+        const districtRes = await fetch(districtUrl);
+        districtRaw = await districtRes.json();
+      }
+
+      return NextResponse.json({ zip, lat, lon, centroidRaw, districtRaw });
     }
 
     if (type === 'members') {
