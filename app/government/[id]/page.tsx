@@ -36,6 +36,7 @@ function ordinal(n: number): string {
   if (j === 3 && k !== 13) return `${n}rd`;
   return `${n}th`;
 }
+interface Summary {
   whatThisMeansForYou: string;
   economicImpact: string;
   stageLabel: string;
@@ -262,4 +263,3 @@ export default function MemberDetailPage() {
     </Suspense>
   );
 }
-
