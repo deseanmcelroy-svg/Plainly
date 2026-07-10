@@ -76,51 +76,56 @@ async function getHouseVoteData(bioguideId: string, limit = 20) {
   const listData = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/${CURRENT_SESSION}`, 900);
   const allVotes: any[] = listData.houseRollCallVotes || [];
 
-  // Congress.gov does not return this list in chronological order (verified:
-  // roll call numbers come back scattered, e.g. 74, 72, 71, 77...). Sorting
-  // by roll call number descending is the closest reliable proxy for "most
-  // recent" since roll calls increment sequentially within a session.
   const sorted = allVotes.slice().sort((a, b) => (b.rollCallNumber || 0) - (a.rollCallNumber || 0));
   const recent = sorted.slice(0, limit);
 
-  const results = await Promise.all(
-    recent.map(async (v: any) => {
-      const session = v.sessionNumber ?? CURRENT_SESSION;
-      const rollNumber = v.rollCallNumber;
-      if (!rollNumber) return null;
-      try {
-        const memberData = await fetchCongress(
-          `/house-vote/${CURRENT_CONGRESS}/${session}/${rollNumber}/members`,
-          3600
-        );
-        const container = memberData.houseRollCallVoteMemberVotes;
-        if (!container) return null;
-        const mine = (container.results || []).find((m: any) => m.bioguideId === bioguideId);
-        if (!mine) return null;
+  // Fetch in small batches rather than one big Promise.all — 20-30
+  // simultaneous requests to Congress.gov's beta endpoint appears to trigger
+  // rate limiting, which was silently failing every request via the catch
+  // block below and producing empty results across the board.
+  const BATCH_SIZE = 5;
+  const found: { position: string; vote: any }[] = [];
 
-        const billLabel =
-          container.legislationType && container.legislationNumber
-            ? `${container.legislationType} ${container.legislationNumber}`
-            : `Roll call ${rollNumber}`;
+  for (let i = 0; i < recent.length; i += BATCH_SIZE) {
+    const batch = recent.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(
+      batch.map(async (v: any) => {
+        const session = v.sessionNumber ?? CURRENT_SESSION;
+        const rollNumber = v.rollCallNumber;
+        if (!rollNumber) return null;
+        try {
+          const memberData = await fetchCongress(
+            `/house-vote/${CURRENT_CONGRESS}/${session}/${rollNumber}/members`,
+            3600
+          );
+          const container = memberData.houseRollCallVoteMemberVotes;
+          if (!container) return null;
+          const mine = (container.results || []).find((m: any) => m.bioguideId === bioguideId);
+          if (!mine) return null;
 
-        return {
-          position: mine.voteCast as string,
-          vote: {
-            id: `${CURRENT_CONGRESS}-${session}-${rollNumber}`,
-            bill: billLabel,
-            description: container.voteQuestion || container.voteType || '',
-            position: mine.voteCast,
-            date: container.startDate || v.startDate || '',
-            result: container.result || v.result || '',
-          },
-        };
-      } catch {
-        return null;
-      }
-    })
-  );
+          const billLabel =
+            container.legislationType && container.legislationNumber
+              ? `${container.legislationType} ${container.legislationNumber}`
+              : `Roll call ${rollNumber}`;
 
-  const found = results.filter(Boolean) as { position: string; vote: any }[];
+          return {
+            position: mine.voteCast as string,
+            vote: {
+              id: `${CURRENT_CONGRESS}-${session}-${rollNumber}`,
+              bill: billLabel,
+              description: container.voteQuestion || container.voteType || '',
+              position: mine.voteCast,
+              date: container.startDate || v.startDate || '',
+              result: container.result || v.result || '',
+            },
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
+    found.push(...(batchResults.filter(Boolean) as { position: string; vote: any }[]));
+  }
   const yesVotes = found
     .filter((r) => r.position.toLowerCase().includes('aye'))
     .map((r) => r.vote)
@@ -129,7 +134,7 @@ async function getHouseVoteData(bioguideId: string, limit = 20) {
   const votingCount = found.filter((r) => !r.position.toLowerCase().includes('not voting')).length;
   const attendance = found.length > 0 ? Math.round((votingCount / found.length) * 100) : null;
 
-  return { votes: yesVotes, attendance };
+  return { votes: yesVotes, attendance, sampled: recent.length, matched: found.length };
 }
 
 async function getSenateActivity(bioguideId: string) {
@@ -210,8 +215,8 @@ export async function GET(request: NextRequest) {
         const activity = await getSenateActivity(memberId);
         return NextResponse.json({ votes: activity, isActivity: true, attendance: null });
       }
-      const { votes, attendance } = await getHouseVoteData(memberId, 30);
-      return NextResponse.json({ votes, isActivity: false, attendance });
+      const { votes, attendance, sampled, matched } = await getHouseVoteData(memberId, 30);
+      return NextResponse.json({ votes, isActivity: false, attendance, sampled, matched });
     }
 
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
