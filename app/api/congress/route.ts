@@ -29,9 +29,8 @@ async function getAllCurrentMembers(): Promise<any[]> {
   return all;
 }
 
-// Offline ZIP3-prefix -> state lookup. No external network call, so it can
-// never silently fail and fall back to a wrong default the way a third-party
-// geocoding API can. Ranges follow standard USPS ZIP3 assignments.
+// Offline ZIP3-prefix -> state lookup. Used as the base state match, and as
+// a fallback if the district-level geocoding below fails for any reason.
 const ZIP3_RANGES: [number, number, string, string][] = [
   [5, 5, 'New York', 'NY'], [6, 9, 'Puerto Rico', 'PR'], [10, 27, 'Massachusetts', 'MA'],
   [28, 29, 'Rhode Island', 'RI'], [30, 38, 'New Hampshire', 'NH'], [39, 49, 'Maine', 'ME'],
@@ -68,21 +67,48 @@ function extractZip(input: string): string {
   return input.match(/\b(\d{5})\b/)?.[1] || '';
 }
 
+// Resolves a ZIP to its actual congressional district, not just its state.
+// Two public, keyless Census Bureau calls: (1) look up the ZCTA's geographic
+// centroid, (2) reverse-geocode that point against the district boundaries.
+// This is a centroid-based approximation — a ZIP that straddles a district
+// line could resolve to the "wrong side" — but it's far more accurate than
+// state-only matching, which was returning an essentially arbitrary House
+// member for every ZIP in a state. Returns null on any failure so the
+// caller can gracefully fall back to state-only matching.
+async function getDistrictForZip(zip: string): Promise<number | null> {
+  if (!zip || !/^\d{5}$/.test(zip)) return null;
+  try {
+    const centroidUrl = `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/4/query?where=ZCTA5='${zip}'&outFields=CENTLAT,CENTLON&f=json`;
+    const centroidRes = await fetch(centroidUrl, { next: { revalidate: 2592000 } }); // 30 days, ZIP boundaries barely change
+    const centroidData = await centroidRes.json();
+    const lat = centroidData.features?.[0]?.attributes?.CENTLAT;
+    const lon = centroidData.features?.[0]?.attributes?.CENTLON;
+    if (!lat || !lon) return null;
+
+    const districtUrl = `https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=${lon}&y=${lat}&benchmark=4&vintage=4&format=json`;
+    const districtRes = await fetch(districtUrl, { next: { revalidate: 2592000 } });
+    const districtData = await districtRes.json();
+    const cdList = districtData.result?.geographies?.['119th Congressional Districts'];
+    const cd119 = cdList?.[0]?.CD119;
+    if (!cd119) return null;
+
+    return parseInt(cd119, 10);
+  } catch {
+    return null;
+  }
+}
+
 // Single pass: fetch each recent vote's member-data once, and from that one
-// fetch derive BOTH this member's yes-vote list AND their attendance rate.
-// (Previously this ran two separate loops over the same 25 votes — ~50
-// outbound calls instead of 25 — which is what was making the page slow.)
-async function getHouseVoteData(bioguideId: string, limit = 20) {
+// fetch derive this member's position on EVERY vote (not just yes), so the
+// frontend can offer a real YES/NO filter, plus their attendance rate.
+async function getHouseVoteData(bioguideId: string, limit = 30) {
   const listData = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/${CURRENT_SESSION}`, 900);
   const allVotes: any[] = listData.houseRollCallVotes || [];
+  const dataAsOf = listData.updateDate || null;
 
   const sorted = allVotes.slice().sort((a, b) => (b.rollCallNumber || 0) - (a.rollCallNumber || 0));
   const recent = sorted.slice(0, limit);
 
-  // Fetch in small batches rather than one big Promise.all — 20-30
-  // simultaneous requests to Congress.gov's beta endpoint appears to trigger
-  // rate limiting, which was silently failing every request via the catch
-  // block below and producing empty results across the board.
   const BATCH_SIZE = 5;
   const found: { position: string; vote: any }[] = [];
 
@@ -126,15 +152,19 @@ async function getHouseVoteData(bioguideId: string, limit = 20) {
     );
     found.push(...(batchResults.filter(Boolean) as { position: string; vote: any }[]));
   }
-  const yesVotes = found
-    .filter((r) => r.position.toLowerCase().includes('aye'))
+
+  // Return every vote the member actually cast (Yea or Nay), so the client
+  // can filter either direction. "Present" and "Not Voting" are excluded
+  // from the list itself but still count toward attendance below.
+  const allCastVotes = found
+    .filter((r) => r.position.toLowerCase().includes('aye') || r.position.toLowerCase().includes('nay'))
     .map((r) => r.vote)
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   const votingCount = found.filter((r) => !r.position.toLowerCase().includes('not voting')).length;
   const attendance = found.length > 0 ? Math.round((votingCount / found.length) * 100) : null;
 
-  return { votes: yesVotes, attendance };
+  return { votes: allCastVotes, attendance, dataAsOf };
 }
 
 async function getSenateActivity(bioguideId: string) {
@@ -157,12 +187,9 @@ async function getSenateActivity(bioguideId: string) {
 function computeNextElection(chamber: string, lastTermStartYear: number | null): string | null {
   const currentYear = new Date().getFullYear();
   if (chamber.includes('House')) {
-    // House seats are up every even year, no exceptions.
     return String(currentYear % 2 === 0 ? currentYear : currentYear + 1);
   }
   if (chamber.includes('Senate') && lastTermStartYear) {
-    // Senate terms are a fixed 6 years. A term starting in year X means the
-    // seat was won in the November of X-1, and comes up again 6 years later.
     let electionYear = lastTermStartYear + 5;
     while (electionYear < currentYear) electionYear += 6;
     return String(electionYear);
@@ -197,28 +224,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    if (type === 'debug-raw-census') {
-      const zip = searchParams.get('zip') || '44721';
-      const centroidUrl = `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/4/query?where=ZCTA5='${zip}'&outFields=CENTLAT,CENTLON&f=json`;
-      const centroidRes = await fetch(centroidUrl);
-      const centroidRaw = await centroidRes.json();
-      const lat = centroidRaw.features?.[0]?.attributes?.CENTLAT;
-      const lon = centroidRaw.features?.[0]?.attributes?.CENTLON;
-
-      let districtRaw = null;
-      if (lat && lon) {
-        const districtUrl = `https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=${lon}&y=${lat}&benchmark=4&vintage=4&format=json`;
-        const districtRes = await fetch(districtUrl);
-        districtRaw = await districtRes.json();
-      }
-
-      return NextResponse.json({ zip, lat, lon, centroidRaw, districtRaw });
-    }
-
     if (type === 'members') {
       const zip = extractZip(location);
       const { state, stateCode } = getStateFromZip(zip);
-      const allMembers = await getAllCurrentMembers();
+      const [allMembers, district] = await Promise.all([getAllCurrentMembers(), getDistrictForZip(zip)]);
 
       const stateMatches = allMembers.filter((m: any) => {
         const ms = String(m.state || '').trim();
@@ -237,8 +246,46 @@ export async function GET(request: NextRequest) {
         (m.terms?.item?.[m.terms.item.length - 1]?.chamber || '').includes('Senate')
       );
 
-      const mapped = [houseMatches[0], ...senateMatches.slice(0, 2)].filter(Boolean).map(mapMember);
-      return NextResponse.json({ members: mapped, state: stateCode, zipUsed: zip || '(none, defaulted)' });
+      let houseMember = houseMatches[0];
+      let districtMatched = false;
+      if (district !== null) {
+        const exact = houseMatches.find((m: any) => Number(m.district) === district);
+        if (exact) {
+          houseMember = exact;
+          districtMatched = true;
+        }
+      }
+
+      const mapped = [houseMember, ...senateMatches.slice(0, 2)].filter(Boolean).map(mapMember);
+      return NextResponse.json({
+        members: mapped,
+        state: stateCode,
+        districtMatched,
+        resolvedDistrict: district,
+      });
+    }
+
+    // Fallback lookup for bookmarked/shared rep links that arrive with no
+    // query-string context (name, party, photo, district, next election).
+    if (type === 'member-info' && memberId) {
+      const data = await fetchCongress(`/member/${memberId}`, 21600);
+      const m = data.member;
+      if (!m) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+
+      const terms = (m.terms || []).slice().sort((a: any, b: any) => (a.startYear || 0) - (b.startYear || 0));
+      const lastTerm = terms[terms.length - 1];
+      const chamber = lastTerm?.chamber || '';
+      const currentParty = (m.partyHistory || [])[m.partyHistory.length - 1]?.partyName || '';
+
+      return NextResponse.json({
+        name: m.directOrderName || m.invertedOrderName,
+        party: currentParty,
+        district: m.district ?? null,
+        depiction: m.depiction?.imageUrl || null,
+        state: m.state || '',
+        chamber,
+        nextElection: computeNextElection(chamber, lastTerm?.startYear || null),
+      });
     }
 
     if (type === 'bio' && memberId) {
@@ -302,10 +349,10 @@ export async function GET(request: NextRequest) {
     if (type === 'votes' && memberId) {
       if (chamber.includes('Senate')) {
         const activity = await getSenateActivity(memberId);
-        return NextResponse.json({ votes: activity, isActivity: true, attendance: null });
+        return NextResponse.json({ votes: activity, isActivity: true, attendance: null, dataAsOf: null });
       }
-      const { votes, attendance } = await getHouseVoteData(memberId, 30);
-      return NextResponse.json({ votes, isActivity: false, attendance });
+      const { votes, attendance, dataAsOf } = await getHouseVoteData(memberId, 30);
+      return NextResponse.json({ votes, isActivity: false, attendance, dataAsOf });
     }
 
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
@@ -313,3 +360,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: e.message || 'Failed' }, { status: 500 });
   }
 }
+

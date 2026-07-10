@@ -63,6 +63,7 @@ export default function GovernmentPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [districtMatched, setDistrictMatched] = useState(false);
 
   useEffect(() => {
     let loc = '';
@@ -79,8 +80,12 @@ export default function GovernmentPage() {
     try {
       const res = await fetch(`/api/congress?type=members&location=${encodeURIComponent(loc)}`);
       const data = await res.json();
-      if (data.error) setError(data.error);
-      else setMembers(data.members || []);
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setMembers(data.members || []);
+        setDistrictMatched(!!data.districtMatched);
+      }
     } catch {
       setError('Could not load your representatives.');
     } finally {
@@ -106,6 +111,7 @@ export default function GovernmentPage() {
       district: m.district?.toString() || '',
       depiction: m.depiction || '',
       nextElection: m.nextElection || '',
+      state: m.state || '',
     });
     router.push(`/government/${m.id}?${q.toString()}`);
   }
@@ -126,7 +132,7 @@ export default function GovernmentPage() {
       </section>
 
       <div className="mx-auto max-w-[760px] px-[6vw] pb-16">
-        <form onSubmit={handleZipSearch} className="mb-7 flex justify-center gap-2.5">
+        <form onSubmit={handleZipSearch} className="mb-3 flex justify-center gap-2.5">
           <input
             type="text"
             value={zipInput}
@@ -141,6 +147,14 @@ export default function GovernmentPage() {
             Search
           </button>
         </form>
+
+        {!loading && !error && members.length > 0 && (
+          <p className="mb-7 text-center text-xs text-muted">
+            {districtMatched
+              ? 'House representative matched to your specific district.'
+              : "Showing your state's House representation — couldn't pinpoint your exact district."}
+          </p>
+        )}
 
         {loading ? (
           <div className="flex flex-col gap-[14px]">
@@ -196,7 +210,9 @@ export default function GovernmentPage() {
                           {m.name}
                         </h3>
                         <div className="text-sm text-muted">
-                          {isHouse ? `Ohio's ${m.district}${ordinalSuffix(m.district)} District` : 'United States Senate'}
+                          {isHouse
+                            ? `${m.state}'s ${m.district}${ordinalSuffix(m.district)} District`
+                            : `United States Senate · ${m.state}`}
                           {' · '}
                           <span style={{ color: style.pillText }}>{m.party}</span>
                         </div>
@@ -222,3 +238,4 @@ export default function GovernmentPage() {
     </main>
   );
 }
+

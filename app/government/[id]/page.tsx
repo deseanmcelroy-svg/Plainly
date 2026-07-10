@@ -65,6 +65,7 @@ function isOnBallotThisCycle(nextElection: string): boolean {
   const year = parseInt(nextElection, 10);
   return year - new Date().getFullYear() <= 1;
 }
+
 interface Summary {
   whatThisMeansForYou: string;
   economicImpact: string;
@@ -74,17 +75,31 @@ interface Summary {
 
 const STAGE_COLOR = (percent: number) => (percent >= 100 ? '#2D7A65' : percent >= 55 ? '#8FBFA8' : '#D9A55E');
 
+function relativeTime(iso: string | null): string | null {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (isNaN(then)) return null;
+  const diffMs = Date.now() - then;
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  if (hours < 1) return 'less than an hour ago';
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
 function MemberDetailContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const memberId = params.id as string;
-  const chamber = searchParams.get('chamber') || '';
-  const repName = searchParams.get('name') || '';
-  const repParty = searchParams.get('party') || '';
-  const repDistrict = searchParams.get('district') || '';
-  const repDepiction = searchParams.get('depiction') || '';
-  const repNextElection = searchParams.get('nextElection') || '';
+
+  const [chamber, setChamber] = useState(searchParams.get('chamber') || '');
+  const [repName, setRepName] = useState(searchParams.get('name') || '');
+  const [repParty, setRepParty] = useState(searchParams.get('party') || '');
+  const [repDistrict, setRepDistrict] = useState(searchParams.get('district') || '');
+  const [repDepiction, setRepDepiction] = useState(searchParams.get('depiction') || '');
+  const [repNextElection, setRepNextElection] = useState(searchParams.get('nextElection') || '');
+  const [repState, setRepState] = useState(searchParams.get('state') || '');
   const isHouse = chamber.includes('House');
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -100,6 +115,25 @@ function MemberDetailContent() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [location, setLocation] = useState('');
+  const [dataAsOf, setDataAsOf] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (repName || !memberId) return;
+    fetch(`/api/congress?type=member-info&memberId=${memberId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.error) return;
+        setRepName(d.name || '');
+        setRepParty(d.party || '');
+        setRepDistrict(d.district?.toString() || '');
+        setRepDepiction(d.depiction || '');
+        setRepNextElection(d.nextElection || '');
+        setRepState(d.state || '');
+        setChamber(d.chamber || '');
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memberId]);
 
   useEffect(() => {
     setBioLoading(true);
@@ -116,6 +150,7 @@ function MemberDetailContent() {
   }, [memberId]);
 
   useEffect(() => {
+    if (!chamber) return;
     try {
       setLocation(localStorage.getItem('plainly-location') || '');
     } catch {}
@@ -135,6 +170,7 @@ function MemberDetailContent() {
         setIsActivity(!!votesRes.isActivity);
         setAttendance(votesRes.attendance ?? null);
         setBillsCount(billsRes.count ?? null);
+        setDataAsOf(votesRes.dataAsOf ?? null);
       })
       .catch(() => setError('Could not load this representative.'))
       .finally(() => setLoading(false));
@@ -160,6 +196,8 @@ function MemberDetailContent() {
       .finally(() => setSummaryLoading(false));
   }, [mostRecent, location]);
 
+  const freshness = relativeTime(dataAsOf);
+
   return (
     <main className="min-h-screen bg-page">
       <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -170,7 +208,7 @@ function MemberDetailContent() {
           ← Your representatives
         </button>
 
-        {bioLoading ? (
+        {bioLoading && !repName ? (
           <div className="mb-4 h-48 animate-pulse rounded-2xl bg-card" />
         ) : (
           <div className="mb-4 overflow-hidden rounded-2xl bg-card shadow-md">
@@ -194,7 +232,9 @@ function MemberDetailContent() {
                   {repName}
                 </div>
                 <div className="mt-0.5 text-xs text-cream/60">
-                  {isHouse ? `Ohio's ${repDistrict}${ordinal(Number(repDistrict))} District` : 'United States Senate'}
+                  {isHouse
+                    ? `${repState || 'Their state'}'s ${repDistrict}${ordinal(Number(repDistrict))} District`
+                    : `United States Senate${repState ? ` · ${repState}` : ''}`}
                 </div>
                 {repParty && (
                   <span
@@ -332,9 +372,12 @@ function MemberDetailContent() {
               </div>
             )}
 
-            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted">
-              {isActivity ? 'Most recent activity' : 'Most recent vote'}
-            </p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted">
+                {isActivity ? 'Most recent activity' : 'Most recent vote'}
+              </p>
+              {freshness && <p className="text-[11px] text-muted">Updated {freshness}</p>}
+            </div>
 
             {!mostRecent ? (
               <div className="rounded-2xl bg-card p-8 text-center text-muted">
@@ -348,8 +391,15 @@ function MemberDetailContent() {
                     {mostRecent.date && <div className="mt-0.5 text-xs text-muted">{mostRecent.date}</div>}
                   </div>
                   {mostRecent.position && (
-                    <span className="flex-shrink-0 rounded-full bg-[#E8F4F0] px-2.5 py-1 text-[11px] font-bold text-[#1e5c4a]">
-                      YES
+                    <span
+                      className="flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                      style={
+                        mostRecent.position.toLowerCase().includes('aye')
+                          ? { background: '#E8F4F0', color: '#1e5c4a' }
+                          : { background: '#FFF0EB', color: '#993C1D' }
+                      }
+                    >
+                      {mostRecent.position.toLowerCase().includes('aye') ? 'YES' : 'NO'}
                     </span>
                   )}
                 </div>

@@ -24,6 +24,22 @@ interface Summary {
 
 const STAGE_COLOR = (percent: number) => (percent >= 100 ? '#2D7A65' : percent >= 55 ? '#8FBFA8' : '#D9A55E');
 
+function isYes(position: string | null): boolean {
+  return !!position && position.toLowerCase().includes('aye');
+}
+
+function relativeTime(iso: string | null): string | null {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (isNaN(then)) return null;
+  const diffMs = Date.now() - then;
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  if (hours < 1) return 'less than an hour ago';
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
 function AllBillsContent() {
   const router = useRouter();
   const params = useParams();
@@ -40,6 +56,8 @@ function AllBillsContent() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [summaryLoading, setSummaryLoading] = useState<string | null>(null);
+  const [voteFilter, setVoteFilter] = useState<'all' | 'yes' | 'no'>('all');
+  const [dataAsOf, setDataAsOf] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -49,11 +67,17 @@ function AllBillsContent() {
       .then((r) => r.json())
       .then((d) => {
         if (d.error) setError(d.error);
-        else setItems(d.votes || []);
+        else {
+          setItems(d.votes || []);
+          setDataAsOf(d.dataAsOf ?? null);
+        }
       })
       .catch(() => setError('Could not load bills.'))
       .finally(() => setLoading(false));
   }, [memberId, chamber]);
+
+  const filteredItems =
+    voteFilter === 'all' ? items : items.filter((i) => (voteFilter === 'yes' ? isYes(i.position) : !isYes(i.position)));
 
   function toggleExpand(item: VoteOrActivity) {
     if (expandedId === item.id) {
@@ -81,6 +105,8 @@ function AllBillsContent() {
       .finally(() => setSummaryLoading(null));
   }
 
+  const freshness = relativeTime(dataAsOf);
+
   return (
     <main className="min-h-screen bg-page">
       <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -91,15 +117,34 @@ function AllBillsContent() {
           ← Back
         </button>
 
-        <h1 className="mb-1 font-display text-2xl font-bold text-navy">
-          {isActivityChamber ? 'Recent legislative activity' : 'Bills voted yes on'}
-        </h1>
+        <div className="mb-1 flex items-center justify-between">
+          <h1 className="font-display text-2xl font-bold text-navy">
+            {isActivityChamber ? 'Recent legislative activity' : 'Votes cast'}
+          </h1>
+          {freshness && !isActivityChamber && <p className="text-[11px] text-muted">Updated {freshness}</p>}
+        </div>
         {isActivityChamber && (
           <p className="mb-5 text-sm text-muted">
             Congress.gov doesn't publish Senate roll-call vote data, so this shows recent legislative activity instead.
           </p>
         )}
         {!isActivityChamber && <div className="mb-5" />}
+
+        {!isActivityChamber && !loading && !error && items.length > 0 && (
+          <div className="mb-6 flex gap-2">
+            {(['all', 'yes', 'no'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setVoteFilter(f)}
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold capitalize transition-colors ${
+                  voteFilter === f ? 'bg-terracotta text-white' : 'border border-line bg-card text-navy'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex flex-col gap-3">
@@ -109,11 +154,13 @@ function AllBillsContent() {
           </div>
         ) : error ? (
           <div className="rounded-2xl bg-card p-8 text-center text-muted">{error}</div>
-        ) : items.length === 0 ? (
-          <div className="rounded-2xl bg-card p-8 text-center text-muted">Nothing to show yet.</div>
+        ) : filteredItems.length === 0 ? (
+          <div className="rounded-2xl bg-card p-8 text-center text-muted">
+            {items.length === 0 ? 'Nothing to show yet.' : 'Nothing matches this filter.'}
+          </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {items.map((item) => {
+            {filteredItems.map((item) => {
               const isOpen = expandedId === item.id;
               const summary = summaries[item.id];
               return (
@@ -122,15 +169,14 @@ function AllBillsContent() {
                     <div>
                       <div className="font-display text-[15px] font-bold leading-snug text-navy">{item.bill}</div>
                       {item.date && <div className="mt-0.5 text-xs text-muted">{item.date}</div>}
-                      {!isOpen && (
-                        <div className="mt-1.5 text-xs font-semibold text-muted">
-                          Tap to see impact and status {isOpen ? '▾' : '▸'}
-                        </div>
-                      )}
+                      {!isOpen && <div className="mt-1.5 text-xs font-semibold text-muted">Tap to see impact and status ▸</div>}
                     </div>
                     {item.position && (
-                      <span className="flex-shrink-0 rounded-full bg-[#E8F4F0] px-2.5 py-1 text-[11px] font-bold text-[#1e5c4a]">
-                        YES
+                      <span
+                        className="flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                        style={isYes(item.position) ? { background: '#E8F4F0', color: '#1e5c4a' } : { background: '#FFF0EB', color: '#993C1D' }}
+                      >
+                        {isYes(item.position) ? 'YES' : 'NO'}
                       </span>
                     )}
                   </button>
