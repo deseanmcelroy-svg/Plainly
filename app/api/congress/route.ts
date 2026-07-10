@@ -205,6 +205,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ members: mapped, state: stateCode, zipUsed: zip || '(none, defaulted)' });
     }
 
+    if (type === 'debug-raw-member-detail' && memberId) {
+      const raw = await fetchCongress(`/member/${memberId}`, 0);
+      return NextResponse.json(raw);
+    }
+
     if (type === 'bills-sponsored-count' && memberId) {
       const data = await fetchCongress(`/member/${memberId}/sponsored-legislation`);
       return NextResponse.json({ count: (data.sponsoredLegislation || []).length });
