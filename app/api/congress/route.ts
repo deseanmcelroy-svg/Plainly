@@ -100,7 +100,7 @@ async function getHouseVoteData(bioguideId: string, limit = 20) {
           );
           const container = memberData.houseRollCallVoteMemberVotes;
           if (!container) return null;
-          const mine = (container.results || []).find((m: any) => m.bioguideId === bioguideId);
+          const mine = (container.results || []).find((m: any) => m.bioguideID === bioguideId);
           if (!mine) return null;
 
           const billLabel =
@@ -134,7 +134,7 @@ async function getHouseVoteData(bioguideId: string, limit = 20) {
   const votingCount = found.filter((r) => !r.position.toLowerCase().includes('not voting')).length;
   const attendance = found.length > 0 ? Math.round((votingCount / found.length) * 100) : null;
 
-  return { votes: yesVotes, attendance, sampled: recent.length, matched: found.length };
+  return { votes: yesVotes, attendance };
 }
 
 async function getSenateActivity(bioguideId: string) {
@@ -210,23 +210,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ count: (data.sponsoredLegislation || []).length });
     }
 
-    if (type === 'debug-raw-member-vote') {
-      const listData = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/${CURRENT_SESSION}`, 0);
-      const allVotes: any[] = listData.houseRollCallVotes || [];
-      const top = allVotes.slice().sort((a, b) => (b.rollCallNumber || 0) - (a.rollCallNumber || 0))[0];
-      const session = top?.sessionNumber ?? CURRENT_SESSION;
-      const rollNumber = top?.rollCallNumber;
-      const raw = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/${session}/${rollNumber}/members`, 0);
-      return NextResponse.json({ requestedRollNumber: rollNumber, session, raw });
-    }
-
     if (type === 'votes' && memberId) {
       if (chamber.includes('Senate')) {
         const activity = await getSenateActivity(memberId);
         return NextResponse.json({ votes: activity, isActivity: true, attendance: null });
       }
-      const { votes, attendance, sampled, matched } = await getHouseVoteData(memberId, 30);
-      return NextResponse.json({ votes, isActivity: false, attendance, sampled, matched });
+      const { votes, attendance } = await getHouseVoteData(memberId, 30);
+      return NextResponse.json({ votes, isActivity: false, attendance });
     }
 
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
