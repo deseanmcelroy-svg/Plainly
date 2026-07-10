@@ -15,7 +15,27 @@ interface VoteOrActivity {
   result: string;
 }
 
-interface Summary {
+interface Bio {
+  name: string;
+  birthYear: string | null;
+  website: string | null;
+  firstTermYear: number | null;
+  termCount: number;
+  chambersServed: string[];
+  yearsServed: number | null;
+  leadership: { type: string; congress: number; isCurrent: boolean }[];
+  partyHistory: { party: string; startYear: number }[];
+  currentlySwitchedParty: boolean;
+}
+
+function ordinal(n: number): string {
+  const j = n % 10;
+  const k = n % 100;
+  if (j === 1 && k !== 11) return `${n}st`;
+  if (j === 2 && k !== 12) return `${n}nd`;
+  if (j === 3 && k !== 13) return `${n}rd`;
+  return `${n}th`;
+}
   whatThisMeansForYou: string;
   economicImpact: string;
   stageLabel: string;
@@ -36,12 +56,23 @@ function MemberDetailContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [mostRecent, setMostRecent] = useState<VoteOrActivity | null>(null);
+  const [bio, setBio] = useState<Bio | null>(null);
+  const [bioLoading, setBioLoading] = useState(true);
   const [isActivity, setIsActivity] = useState(false);
   const [attendance, setAttendance] = useState<number | null>(null);
   const [billsCount, setBillsCount] = useState<number | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [location, setLocation] = useState('');
+
+  useEffect(() => {
+    setBioLoading(true);
+    fetch(`/api/congress?type=bio&memberId=${memberId}`)
+      .then((r) => r.json())
+      .then((d) => setBio(d.error ? null : d))
+      .catch(() => setBio(null))
+      .finally(() => setBioLoading(false));
+  }, [memberId]);
 
   useEffect(() => {
     try {
@@ -97,6 +128,40 @@ function MemberDetailContent() {
         <button onClick={() => router.push('/government')} className="mb-4 flex items-center gap-2 text-sm text-muted">
           ← Your representatives
         </button>
+
+        {bioLoading ? (
+          <div className="mb-4 h-28 animate-pulse rounded-2xl bg-card" />
+        ) : bio ? (
+          <div className="mb-4 rounded-2xl bg-card p-4 shadow-sm">
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted">Profile</p>
+            <div className="flex flex-col gap-1.5 text-sm text-navy">
+              {bio.firstTermYear && (
+                <div>
+                  In {isHouse ? 'the House' : 'the Senate'} since {bio.firstTermYear}
+                  {bio.yearsServed !== null && ` — ${bio.yearsServed} year${bio.yearsServed === 1 ? '' : 's'} of service`}
+                  {bio.termCount > 1 && ` (${bio.termCount} terms)`}
+                </div>
+              )}
+              {bio.chambersServed.length > 1 && (
+                <div>Previously served in: {bio.chambersServed.filter((c) => c !== chamber).join(', ')}</div>
+              )}
+              {bio.leadership.length > 0 && (
+                <div>
+                  Leadership: {bio.leadership.map((l) => `${l.type}${l.isCurrent ? ' (current)' : ` (${ordinal(l.congress)} Congress)`}`).join(', ')}
+                </div>
+              )}
+              {bio.currentlySwitchedParty && (
+                <div>Party history: {bio.partyHistory.map((p) => `${p.party} (since ${p.startYear})`).join(' → ')}</div>
+              )}
+              {bio.birthYear && <div>Born {bio.birthYear}</div>}
+              {bio.website && (
+                <a href={bio.website} target="_blank" rel="noopener noreferrer" className="font-semibold text-terracotta">
+                  Official website ↗
+                </a>
+              )}
+            </div>
+          </div>
+        ) : null}
 
         {loading ? (
           <div className="flex flex-col gap-4">
