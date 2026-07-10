@@ -210,6 +210,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ count: (data.sponsoredLegislation || []).length });
     }
 
+    if (type === 'debug-raw-member-vote') {
+      const listData = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/${CURRENT_SESSION}`, 0);
+      const allVotes: any[] = listData.houseRollCallVotes || [];
+      const top = allVotes.slice().sort((a, b) => (b.rollCallNumber || 0) - (a.rollCallNumber || 0))[0];
+      const session = top?.sessionNumber ?? CURRENT_SESSION;
+      const rollNumber = top?.rollCallNumber;
+      const raw = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/${session}/${rollNumber}/members`, 0);
+      return NextResponse.json({ requestedRollNumber: rollNumber, session, raw });
+    }
+
     if (type === 'votes' && memberId) {
       if (chamber.includes('Senate')) {
         const activity = await getSenateActivity(memberId);
