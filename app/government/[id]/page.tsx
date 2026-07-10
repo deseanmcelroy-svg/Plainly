@@ -36,6 +36,34 @@ function ordinal(n: number): string {
   if (j === 3 && k !== 13) return `${n}rd`;
   return `${n}th`;
 }
+
+const PARTY: Record<string, { pillBg: string; pillText: string; gradient: string }> = {
+  Republican: { pillBg: 'rgba(217,102,62,0.25)', pillText: '#FAECE7', gradient: 'linear-gradient(135deg,#D9663E,#c25530)' },
+  Democratic: { pillBg: 'rgba(91,143,217,0.25)', pillText: '#E6F1FB', gradient: 'linear-gradient(135deg,#5B8FD9,#4577c2)' },
+  Independent: { pillBg: 'rgba(143,191,168,0.25)', pillText: '#EAF3DE', gradient: 'linear-gradient(135deg,#5B8C7B,#4a7566)' },
+};
+
+function partyStyle(party: string) {
+  return PARTY[party] || PARTY.Independent;
+}
+
+function initials(name: string): string {
+  return (
+    name
+      ?.split(',')[0]
+      ?.trim()
+      ?.split(' ')
+      .map((w) => w[0])
+      .join('')
+      .slice(0, 2) || '?'
+  );
+}
+
+function isOnBallotThisCycle(nextElection: string): boolean {
+  if (!nextElection) return false;
+  const year = parseInt(nextElection, 10);
+  return year - new Date().getFullYear() <= 1;
+}
 interface Summary {
   whatThisMeansForYou: string;
   economicImpact: string;
@@ -51,6 +79,11 @@ function MemberDetailContent() {
   const searchParams = useSearchParams();
   const memberId = params.id as string;
   const chamber = searchParams.get('chamber') || '';
+  const repName = searchParams.get('name') || '';
+  const repParty = searchParams.get('party') || '';
+  const repDistrict = searchParams.get('district') || '';
+  const repDepiction = searchParams.get('depiction') || '';
+  const repNextElection = searchParams.get('nextElection') || '';
   const isHouse = chamber.includes('House');
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -131,38 +164,118 @@ function MemberDetailContent() {
         </button>
 
         {bioLoading ? (
-          <div className="mb-4 h-28 animate-pulse rounded-2xl bg-card" />
-        ) : bio ? (
-          <div className="mb-4 rounded-2xl bg-card p-4 shadow-sm">
-            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted">Profile</p>
-            <div className="flex flex-col gap-1.5 text-sm text-navy">
-              {bio.firstTermYear && (
-                <div>
-                  In {isHouse ? 'the House' : 'the Senate'} since {bio.firstTermYear}
-                  {bio.yearsServed !== null && ` — ${bio.yearsServed} year${bio.yearsServed === 1 ? '' : 's'} of service`}
-                  {bio.termCount > 1 && ` (${bio.termCount} terms)`}
+          <div className="mb-4 h-48 animate-pulse rounded-2xl bg-card" />
+        ) : (
+          <div className="mb-4 overflow-hidden rounded-2xl bg-card shadow-md">
+            <div
+              className="flex items-center gap-3.5 p-5"
+              style={{ background: 'linear-gradient(135deg,#1A2B3D,#243B52)' }}
+            >
+              {repDepiction ? (
+                <img src={repDepiction} alt={repName} className="h-14 w-14 flex-shrink-0 rounded-2xl object-cover" />
+              ) : (
+                <div
+                  className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl text-base font-bold text-white"
+                  style={{ background: partyStyle(repParty).gradient }}
+                >
+                  {initials(repName)}
                 </div>
               )}
-              {bio.chambersServed.length > 1 && (
-                <div>Previously served in: {bio.chambersServed.filter((c) => c !== chamber).join(', ')}</div>
-              )}
-              {bio.leadership.length > 0 && (
-                <div>
-                  Leadership: {bio.leadership.map((l) => `${l.type}${l.isCurrent ? ' (current)' : ` (${ordinal(l.congress)} Congress)`}`).join(', ')}
+              <div>
+                <div className="font-display text-lg font-bold text-cream">
+                  {isHouse ? 'Rep. ' : 'Sen. '}
+                  {repName}
+                </div>
+                <div className="mt-0.5 text-xs text-cream/60">
+                  {isHouse ? `Ohio's ${repDistrict}${ordinal(Number(repDistrict))} District` : 'United States Senate'}
+                </div>
+                {repParty && (
+                  <span
+                    className="mt-1.5 inline-block rounded-full px-2.5 py-1 text-[11px] font-bold"
+                    style={{ background: partyStyle(repParty).pillBg, color: partyStyle(repParty).pillText }}
+                  >
+                    {repParty}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col px-4">
+              {bio?.firstTermYear && (
+                <div className="flex items-center gap-2.5 border-b border-line/60 py-2.5">
+                  <div className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-lg bg-[#EAF3DE]">
+                    <span className="text-sm">📅</span>
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-semibold text-navy">
+                      In {isHouse ? 'the House' : 'the Senate'} since {bio.firstTermYear}
+                    </div>
+                    <div className="text-xs text-muted">
+                      {bio.yearsServed} year{bio.yearsServed === 1 ? '' : 's'} of service
+                      {bio.termCount > 1 && ` · ${bio.termCount} terms`}
+                    </div>
+                  </div>
                 </div>
               )}
-              {bio.currentlySwitchedParty && (
-                <div>Party history: {bio.partyHistory.map((p) => `${p.party} (since ${p.startYear})`).join(' → ')}</div>
+
+              {bio && bio.chambersServed.length > 1 && (
+                <div className="flex items-center gap-2.5 border-b border-line/60 py-2.5">
+                  <div className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-lg bg-[#EEF3F8]">
+                    <span className="text-sm">🏛️</span>
+                  </div>
+                  <div className="text-[13px] font-semibold text-navy">
+                    Also served in: {bio.chambersServed.filter((c) => c !== chamber).join(', ')}
+                  </div>
+                </div>
               )}
-              {bio.birthYear && <div>Born {bio.birthYear}</div>}
-              {bio.website && (
-                <a href={bio.website} target="_blank" rel="noopener noreferrer" className="font-semibold text-terracotta">
-                  Official website ↗
-                </a>
+
+              {bio && bio.leadership.length > 0 && (
+                <div className="flex items-center gap-2.5 border-b border-line/60 py-2.5">
+                  <div className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-lg bg-[#FFF0EB]">
+                    <span className="text-sm">⭐</span>
+                  </div>
+                  <div className="text-[13px] font-semibold text-navy">
+                    {bio.leadership.map((l) => `${l.type}${l.isCurrent ? ' (current)' : ` (${ordinal(l.congress)} Congress)`}`).join(', ')}
+                  </div>
+                </div>
+              )}
+
+              {repNextElection && (
+                <div className="flex items-center gap-2.5 border-b border-line/60 py-2.5">
+                  <div className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-lg bg-[#EEF3F8]">
+                    <span className="text-sm">🗳️</span>
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-semibold text-navy">Up for reelection Nov {repNextElection}</div>
+                    {isOnBallotThisCycle(repNextElection) && (
+                      <div className="text-xs text-muted">On your ballot this cycle</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {bio?.birthYear && (
+                <div className="flex items-center gap-2.5 py-2.5">
+                  <div className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-lg bg-[#F4F2EA]">
+                    <span className="text-sm">🎂</span>
+                  </div>
+                  <div className="text-[13px] font-semibold text-navy">Born {bio.birthYear}</div>
+                </div>
               )}
             </div>
+
+            {bio?.website && (
+              <a
+                href={bio.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 border-t border-line bg-page py-3 text-sm font-bold text-terracotta"
+              >
+                Official website ↗
+              </a>
+            )}
           </div>
-        ) : null}
+        )}
 
         {loading ? (
           <div className="flex flex-col gap-4">
@@ -263,3 +376,4 @@ export default function MemberDetailPage() {
     </Suspense>
   );
 }
+

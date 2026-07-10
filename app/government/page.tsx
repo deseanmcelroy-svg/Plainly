@@ -149,7 +149,17 @@ export default function GovernmentPage() {
                 return (
                   <button
                     key={m.id}
-                    onClick={() => router.push(`/government/${m.id}?chamber=${encodeURIComponent(m.chamber)}`)}
+                    onClick={() => {
+                      const q = new URLSearchParams({
+                        chamber: m.chamber,
+                        name: m.name,
+                        party: m.party,
+                        district: m.district?.toString() || '',
+                        depiction: m.depiction || '',
+                        nextElection: m.nextElection || '',
+                      });
+                      router.push(`/government/${m.id}?${q.toString()}`);
+                    }}
                     className="flex w-full flex-col overflow-hidden rounded-2xl bg-card text-left shadow-sm"
                     style={{ borderLeft: `3px solid ${style.accent}` }}
                   >
