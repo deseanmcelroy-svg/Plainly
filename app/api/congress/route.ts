@@ -79,7 +79,7 @@ async function getDistrictForZip(zip: string): Promise<number | null> {
   if (!zip || !/^\d{5}$/.test(zip)) return null;
   try {
     const centroidUrl = `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/4/query?where=ZCTA5='${zip}'&outFields=CENTLAT,CENTLON&f=json`;
-    const centroidRes = await fetch(centroidUrl, { next: { revalidate: 2592000 } });
+    const centroidRes = await fetch(centroidUrl, { next: { revalidate: 2592000 } }); // 30 days, ZIP boundaries barely change
     const centroidData = await centroidRes.json();
     const lat = centroidData.features?.[0]?.attributes?.CENTLAT;
     const lon = centroidData.features?.[0]?.attributes?.CENTLON;
@@ -98,6 +98,9 @@ async function getDistrictForZip(zip: string): Promise<number | null> {
   }
 }
 
+// Single pass: fetch each recent vote's member-data once, and from that one
+// fetch derive this member's position on EVERY vote (not just yes), so the
+// frontend can offer a real YES/NO filter, plus their attendance rate.
 async function getHouseVoteData(bioguideId: string, limit = 30) {
   const listData = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/${CURRENT_SESSION}`, 900);
   const allVotes: any[] = listData.houseRollCallVotes || [];
@@ -150,6 +153,9 @@ async function getHouseVoteData(bioguideId: string, limit = 30) {
     found.push(...(batchResults.filter(Boolean) as { position: string; vote: any }[]));
   }
 
+  // Return every vote the member actually cast (Yea or Nay), so the client
+  // can filter either direction. "Present" and "Not Voting" are excluded
+  // from the list itself but still count toward attendance below.
   const allCastVotes = found
     .filter((r) => r.position.toLowerCase().includes('aye') || r.position.toLowerCase().includes('nay'))
     .map((r) => r.vote)
@@ -206,6 +212,74 @@ function mapMember(m: any) {
   };
 }
 
+// Computes Election Day for a given year: the first Tuesday after the
+// first Monday in November, per federal law.
+function getElectionDay(year: number): string {
+  const nov1 = new Date(year, 10, 1);
+  const dayOfWeek = nov1.getDay();
+  const daysToMonday = (8 - dayOfWeek) % 7;
+  const electionDateNum = 1 + daysToMonday + 1;
+  const d = new Date(year, 10, electionDateNum);
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function formatCandidateName(raw: string): string {
+  const parts = raw.split(',').map((p) => p.trim());
+  if (parts.length < 2) return raw;
+  const last = parts[0];
+  const first = parts[1].split(' ')[0];
+  const titleCase = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+  return `${titleCase(first)} ${titleCase(last)}`;
+}
+
+function normalizeParty(partyFull: string): string {
+  const p = (partyFull || '').toUpperCase();
+  if (p.includes('REPUBLICAN')) return 'Republican';
+  if (p.includes('DEMOCRATIC')) return 'Democratic';
+  if (p.includes('LIBERTARIAN')) return 'Libertarian';
+  if (p.includes('GREEN')) return 'Green';
+  if (p.includes('INDEPENDENT')) return 'Independent';
+  return partyFull ? partyFull.replace(/\bPARTY\b/i, '').trim().split(' ').map((w) => w.charAt(0) + w.slice(1).toLowerCase()).join(' ') : 'Other';
+}
+
+// Candidates for the incumbent's own race, filtered to those ACTUALLY on
+// the ballot this cycle. FEC's `cycles` field includes any two-year
+// reporting period a candidate has ever touched (going back decades) —
+// filtering by that alone would show retired members and defeated primary
+// candidates as if they were current. `election_years` is the field that
+// actually reflects which specific elections a candidate is/was on the
+// ballot for, so that's what determines inclusion here.
+async function getCandidatesForRace(chamber: string, state: string, district: string, cycle: number) {
+  const FEC_KEY = process.env.FEC_API_KEY;
+  if (!FEC_KEY) return { candidates: [], electionDate: getElectionDay(cycle) };
+
+  const office = chamber.includes('Senate') ? 'S' : 'H';
+  const params = new URLSearchParams({ office, state, cycle: String(cycle), api_key: FEC_KEY, per_page: '100' });
+  if (office === 'H' && district) {
+    params.set('district', district.padStart(2, '0'));
+  }
+
+  const res = await fetch(`https://api.open.fec.gov/v1/candidates/?${params.toString()}`, {
+    next: { revalidate: 1209600 },
+  });
+  if (!res.ok) return { candidates: [], electionDate: getElectionDay(cycle) };
+  const data = await res.json();
+
+  const results: any[] = data.results || [];
+  const onBallotThisCycle = results.filter((c: any) => (c.election_years || []).includes(cycle));
+
+  const candidates = onBallotThisCycle.map((c: any) => ({
+    candidateId: c.candidate_id,
+    name: formatCandidateName(c.name),
+    party: normalizeParty(c.party_full),
+    role: c.incumbent_challenge_full,
+    hasRaisedFunds: !!c.has_raised_funds,
+    firstFileDate: c.first_file_date,
+  }));
+
+  return { candidates, electionDate: getElectionDay(cycle) };
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const location = searchParams.get('location') || '';
@@ -218,19 +292,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    if (type === 'debug-raw-fec-candidates') {
-      const office = searchParams.get('office') || 'H';
-      const state = searchParams.get('state') || 'OH';
-      const district = searchParams.get('district') || '02';
-      const cycle = searchParams.get('cycle') || '2026';
-      const FEC_KEY = process.env.FEC_API_KEY;
-      if (!FEC_KEY) return NextResponse.json({ error: 'FEC_API_KEY not set' }, { status: 503 });
-      const params = new URLSearchParams({ office, state, cycle, api_key: FEC_KEY });
-      if (office === 'H') params.set('district', district);
-      const url = `https://api.open.fec.gov/v1/candidates/?${params.toString()}`;
-      const res = await fetch(url);
-      const raw = await res.json();
-      return NextResponse.json({ requestedUrl: url.replace(FEC_KEY, 'REDACTED'), status: res.status, raw });
+    if (type === 'candidates') {
+      const chamber = searchParams.get('chamber') || '';
+      const state = searchParams.get('state') || '';
+      const district = searchParams.get('district') || '';
+      const cycle = parseInt(searchParams.get('cycle') || '', 10);
+      if (!state || !cycle) return NextResponse.json({ candidates: [], electionDate: null });
+      const result = await getCandidatesForRace(chamber, state, district, cycle);
+      return NextResponse.json(result);
     }
 
     if (type === 'members') {
@@ -274,6 +343,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Fallback lookup for bookmarked/shared rep links that arrive with no
+    // query-string context (name, party, photo, district, next election).
     if (type === 'member-info' && memberId) {
       const data = await fetchCongress(`/member/${memberId}`, 21600);
       const m = data.member;
@@ -367,3 +438,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: e.message || 'Failed' }, { status: 500 });
   }
 }
+

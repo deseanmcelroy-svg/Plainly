@@ -29,6 +29,22 @@ interface Bio {
   cosponsoredCount: number | null;
 }
 
+const CANDIDATE_PARTY_COLOR: Record<string, { bg: string; border: string; text: string; avatar: string }> = {
+  Republican: { bg: '#FFF8F3', border: '#F0E4D8', text: '#993C1D', avatar: '#D9663E' },
+  Democratic: { bg: '#EEF3F8', border: '#DCE8F2', text: '#0C447C', avatar: '#378ADD' },
+  Independent: { bg: '#EAF3DE', border: '#D9E8C4', text: '#27500A', avatar: '#8FBFA8' },
+  Libertarian: { bg: '#FBEAF0', border: '#F0D0DE', text: '#72243E', avatar: '#D4537E' },
+  Green: { bg: '#EAF3DE', border: '#D9E8C4', text: '#173404', avatar: '#639922' },
+};
+
+function candidatePartyStyle(party: string) {
+  return CANDIDATE_PARTY_COLOR[party] || { bg: '#F4F2EA', border: '#E5E2D8', text: '#5f5e5a', avatar: '#B4B2A9' };
+}
+
+function candidateInitials(name: string): string {
+  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+}
+
 function ordinal(n: number): string {
   const j = n % 10;
   const k = n % 100;
@@ -109,6 +125,8 @@ function MemberDetailContent() {
   const [bio, setBio] = useState<Bio | null>(null);
   const [bioLoading, setBioLoading] = useState(true);
   const [policyAreas, setPolicyAreas] = useState<string[]>([]);
+  const [candidates, setCandidates] = useState<{ name: string; party: string; role: string }[]>([]);
+  const [electionDate, setElectionDate] = useState<string | null>(null);
   const [isActivity, setIsActivity] = useState(false);
   const [attendance, setAttendance] = useState<number | null>(null);
   const [billsCount, setBillsCount] = useState<number | null>(null);
@@ -148,6 +166,23 @@ function MemberDetailContent() {
       .then((d) => setPolicyAreas(d.policyAreas || []))
       .catch(() => {});
   }, [memberId]);
+
+  useEffect(() => {
+    if (!chamber || !repState || !repNextElection) return;
+    const q = new URLSearchParams({
+      chamber,
+      state: repState,
+      district: repDistrict || '',
+      cycle: repNextElection,
+    });
+    fetch(`/api/congress?type=candidates&${q.toString()}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setCandidates(d.candidates || []);
+        setElectionDate(d.electionDate || null);
+      })
+      .catch(() => {});
+  }, [chamber, repState, repDistrict, repNextElection]);
 
   useEffect(() => {
     if (!chamber) return;
@@ -334,6 +369,44 @@ function MemberDetailContent() {
                 Official website ↗
               </a>
             )}
+          </div>
+        )}
+
+        {candidates.filter((c) => c.role !== 'Incumbent').length > 0 && (
+          <div className="mb-4 rounded-2xl bg-card p-4 shadow-sm">
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted">Who's on the ballot</p>
+            <div className="flex flex-col gap-2">
+              {candidates
+                .filter((c) => c.role !== 'Incumbent')
+                .map((c, i) => {
+                  const style = candidatePartyStyle(c.party);
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2.5 rounded-xl p-2.5"
+                      style={{ background: style.bg, border: `0.5px solid ${style.border}` }}
+                    >
+                      <div
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-[11px] font-bold text-white"
+                        style={{ background: style.avatar }}
+                      >
+                        {candidateInitials(c.name)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] font-semibold text-navy">{c.name}</div>
+                        <div className="text-[11px]" style={{ color: style.text }}>
+                          {c.party}. Running against {repName}
+                          {electionDate ? ` ${electionDate}` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+            <p className="mt-3 text-[10.5px] leading-relaxed text-muted">
+              Based on FEC candidate filings. Reflects who has registered to run — not a confirmed general-election
+              matchup.
+            </p>
           </div>
         )}
 
