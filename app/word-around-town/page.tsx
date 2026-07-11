@@ -3,8 +3,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/auth';
 
@@ -42,7 +40,6 @@ export default function WordAroundTownPage() {
 function WordAroundTownContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [location, setLocation] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [stats, setStats] = useState<CommunityStat[]>([]);
@@ -94,9 +91,6 @@ function WordAroundTownContent() {
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <div className="mx-auto max-w-[680px] px-[6vw] pb-16 pt-6">
 
         <div className="flex items-center gap-3">

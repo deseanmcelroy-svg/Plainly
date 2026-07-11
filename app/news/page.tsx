@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SlideMenu from '@/components/SlideMenu';
 import Link from 'next/link';
 
 interface Article {
@@ -45,7 +43,6 @@ const PLACEHOLDER_EMOJI = {
 };
 
 export default function NewsPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'local' | 'state' | 'national'>('all');
@@ -70,9 +67,6 @@ export default function NewsPage() {
 
   return (
     <main className="min-h-screen bg-page">
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-
       <div className="mx-auto max-w-2xl px-[6vw] pb-16">
         <div className="mb-6">
           <h1 className="font-display text-3xl font-bold text-navy">In the news</h1>

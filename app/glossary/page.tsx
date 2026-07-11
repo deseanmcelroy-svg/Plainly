@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { GLOSSARY, getAllTerms } from '@/lib/glossary';
 
@@ -15,7 +13,6 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export default function GlossaryPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
@@ -42,9 +39,6 @@ export default function GlossaryPage() {
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <div className="mx-auto max-w-[680px] px-[6vw] pb-16 pt-6">
         <h1 className="font-display text-[clamp(2rem,5vw,2.6rem)] font-bold leading-tight">
           Civic glossary

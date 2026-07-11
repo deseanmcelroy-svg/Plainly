@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { Candidate } from '@/lib/types';
 
@@ -33,7 +31,6 @@ const CHANNEL_URLS: Record<string, (id: string) => string> = {
 export default function CandidatePage() {
   const params = useParams();
   const slug = typeof params.slug === 'string' ? params.slug : '';
-  const [menuOpen, setMenuOpen] = useState(false);
   const [candidate, setCandidate] = useState<StoredCandidate | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -47,9 +44,6 @@ export default function CandidatePage() {
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <div className="mx-auto max-w-[680px] px-[6vw] pb-16 pt-6">
         {!loaded && (
           <div className="py-12 text-center text-muted">Loading&hellip;</div>

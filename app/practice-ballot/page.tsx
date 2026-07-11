@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/auth';
 import { useHouseholdProfile } from '@/lib/householdProfile';
@@ -43,7 +41,6 @@ export default function PracticeBallotPage() {
   const { user } = useAuth();
   const { profile, loaded: profileLoaded } = useHouseholdProfile();
   const profileHasData = profileLoaded && hasProfileData(profile);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [location, setLocation] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [ballot, setBallot] = useState<LocationBallot | null>(null);
@@ -164,9 +161,6 @@ export default function PracticeBallotPage() {
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <div className="mx-auto max-w-[680px] px-[6vw] pb-16 pt-6">
         <h1 className="font-display text-[clamp(2rem,5vw,2.6rem)] font-bold leading-tight">
           Practice ballot

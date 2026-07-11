@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { BallotItem, HouseholdProfile, ImpactEstimate } from '@/lib/types';
 import { buildAdditionalContext, buildHomeValueComparison, buildPracticeImpactSynopsis } from '@/lib/impactEstimate';
@@ -25,7 +23,6 @@ const HOME_VALUE_LABELS: Record<NonNullable<HouseholdProfile['home_value_range']
 export default function ImpactDetailPage() {
   const params = useParams();
   const id = typeof params.id === 'string' ? params.id : '';
-  const [menuOpen, setMenuOpen] = useState(false);
   const [data, setData] = useState<StoredImpact | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -42,9 +39,6 @@ export default function ImpactDetailPage() {
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <div className="mx-auto max-w-[680px] px-[6vw] pb-16 pt-6">
         {!loaded && <div className="py-12 text-center text-muted">Loading…</div>}
 

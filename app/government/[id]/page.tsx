@@ -2,9 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SlideMenu from '@/components/SlideMenu';
 
 interface VoteOrActivity {
   id: string;
@@ -127,7 +125,6 @@ function MemberDetailContent() {
   const [repState, setRepState] = useState(searchParams.get('state') || '');
   const isHouse = chamber.includes('House');
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [mostRecent, setMostRecent] = useState<VoteOrActivity | null>(null);
@@ -244,9 +241,6 @@ function MemberDetailContent() {
 
   return (
     <main className="min-h-screen bg-page">
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-
       <div className="mx-auto max-w-2xl px-[6vw] pb-16 pt-6">
         <button onClick={() => router.push('/government')} className="mb-4 flex items-center gap-2 text-sm text-muted">
           ← Your representatives

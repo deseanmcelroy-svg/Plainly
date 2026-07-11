@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { stateFromZip, StateInfo } from '@/lib/zipToState';
 
@@ -23,7 +21,6 @@ const COMMON_NON_PHOTO_IDS = [
 ];
 
 export default function VoterIdPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [zip, setZip] = useState('');
   const [state, setState] = useState<StateInfo | null | undefined>(undefined);
 
@@ -34,9 +31,6 @@ export default function VoterIdPage() {
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <div className="mx-auto max-w-[680px] px-[6vw] pb-16 pt-6">
         <h1 className="font-display text-[clamp(2rem,5vw,2.6rem)] font-bold leading-tight">
           What ID do I need?

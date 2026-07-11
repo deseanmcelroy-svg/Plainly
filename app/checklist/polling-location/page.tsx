@@ -1,15 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/auth';
 import { PollingInfo, VoteSite } from '@/lib/types';
 
 export default function PollingLocationPage() {
   const { user } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [data, setData] = useState<PollingInfo | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,9 +52,6 @@ export default function PollingLocationPage() {
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <div className="mx-auto max-w-[680px] px-[6vw] pb-16 pt-6">
         <h1 className="font-display text-[clamp(2rem,5vw,2.6rem)] font-bold leading-tight">
           Where do I vote?

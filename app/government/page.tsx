@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SlideMenu from '@/components/SlideMenu';
 
 interface Member {
   id: string;
@@ -57,7 +55,6 @@ function initials(name: string): string {
 
 export default function GovernmentPage() {
   const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [location, setLocation] = useState('');
   const [zipInput, setZipInput] = useState('');
   const [members, setMembers] = useState<Member[]>([]);
@@ -118,9 +115,6 @@ export default function GovernmentPage() {
 
   return (
     <main>
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-
       <section className="mx-auto max-w-[760px] px-[6vw] pb-9 pt-6 text-center">
         <h1 className="font-display text-[clamp(2.2rem,5.5vw,3.2rem)] font-bold leading-[1.15] tracking-tight">
           Your <span className="text-terracotta">representatives</span>

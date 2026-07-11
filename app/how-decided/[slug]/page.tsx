@@ -2,8 +2,6 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { getHowDecidedContent } from '@/lib/howDecided';
 import { useState } from 'react';
@@ -11,14 +9,10 @@ import { useState } from 'react';
 export default function HowDecidedPage() {
   const params = useParams();
   const slug = typeof params.slug === 'string' ? params.slug : 'generic';
-  const [menuOpen, setMenuOpen] = useState(false);
   const content = getHowDecidedContent(slug);
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <div className="mx-auto max-w-[680px] px-[6vw] pb-16 pt-6">
         <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">
           How it gets decided

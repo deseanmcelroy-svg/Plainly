@@ -2,9 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SlideMenu from '@/components/SlideMenu';
 
 interface Article {
   id: string;
@@ -39,7 +37,6 @@ const PLACEHOLDER_EMOJI = {
 function NewsDetailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [article, setArticle] = useState<Article | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +73,6 @@ function NewsDetailContent() {
   if (!article) {
     return (
       <main className="min-h-screen bg-page">
-        <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
         <div className="px-[6vw] py-16 text-center text-muted">Article not found.</div>
         <Footer />
       </main>
@@ -85,8 +81,6 @@ function NewsDetailContent() {
 
   return (
     <main className="min-h-screen bg-page">
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
 
       <div className="mx-auto max-w-2xl pb-16">
         <div className="px-[6vw] mb-4">

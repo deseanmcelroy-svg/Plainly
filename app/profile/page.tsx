@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { useHouseholdProfile } from '@/lib/householdProfile';
 import { HouseholdProfile } from '@/lib/types';
@@ -34,7 +32,6 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export default function ProfilePage() {
   const { profile, setProfile, loaded } = useHouseholdProfile();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [status, setStatus] = useState<SaveStatus>('idle');
 
   async function save(updates: Partial<HouseholdProfile>) {
@@ -57,9 +54,6 @@ export default function ProfilePage() {
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <div className="mx-auto max-w-[640px] px-[6vw] pb-16 pt-6">
         <div className="text-center">
           <h1 className="font-display text-[clamp(2rem,5vw,2.6rem)] font-bold tracking-tight">

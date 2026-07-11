@@ -56,7 +56,7 @@ const themeInitScript = `
 // Registers the service worker for PWA installability and offline support.
 // Runs after the page loads so it doesn't compete with initial rendering.
 
-import PageTransition from '@/components/PageTransition';
+import AppShell from '@/components/AppShell';
 
 const splashScript = `
   (function() {
@@ -106,7 +106,7 @@ export default function RootLayout({
             <HouseholdProfileProvider>
               <SplashScreen />
               <OnboardingModal />
-              <PageTransition>{children}</PageTransition>
+              <AppShell>{children}</AppShell>
               <Analytics />
             </HouseholdProfileProvider>
           </AuthProvider>

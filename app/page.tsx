@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Hero from '@/components/Hero';
 import BallotSummary from '@/components/BallotSummary';
 import ElectionCalendar from '@/components/ElectionCalendar';
@@ -17,7 +15,6 @@ import WaitlistForm, { isWaitlistDone } from '@/components/WaitlistForm';
 
 export default function Home() {
   const { user } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [ballot, setBallot] = useState<LocationBallot | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,9 +73,6 @@ export default function Home() {
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <Hero onSearch={handleSearch} />
 
       {loading && (

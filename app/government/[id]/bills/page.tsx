@@ -2,9 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SlideMenu from '@/components/SlideMenu';
 
 interface VoteOrActivity {
   id: string;
@@ -48,7 +46,6 @@ function AllBillsContent() {
   const chamber = searchParams.get('chamber') || '';
   const isActivityChamber = chamber.includes('Senate');
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [items, setItems] = useState<VoteOrActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -109,9 +106,6 @@ function AllBillsContent() {
 
   return (
     <main className="min-h-screen bg-page">
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-
       <div className="mx-auto max-w-2xl px-[6vw] pb-16 pt-6">
         <button onClick={() => router.back()} className="mb-4 flex items-center gap-2 text-sm text-muted">
           ← Back

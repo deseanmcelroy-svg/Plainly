@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '@/components/Header';
-import SlideMenu from '@/components/SlideMenu';
 import Footer from '@/components/Footer';
 import { GOVERNMENT_ROLE_SECTIONS } from '@/lib/leadership';
 import { GovernmentLevel } from '@/lib/types';
@@ -23,7 +21,6 @@ const ICON_BG: Record<GovernmentLevel, string> = {
 };
 
 export default function LeadershipPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -45,9 +42,6 @@ export default function LeadershipPage() {
 
   return (
     <main>
-      <Header onMenuOpen={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-
       <section className="mx-auto max-w-[760px] px-[6vw] pb-9 pt-6 text-center">
         <h1 className="font-display text-[clamp(2.2rem,5.5vw,3.2rem)] font-bold leading-[1.15] tracking-tight">
           Who does <span className="text-terracotta">what?</span>
