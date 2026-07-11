@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
 
@@ -168,14 +169,26 @@ function MenuLink({
   chevron?: boolean;
   external?: boolean;
 }) {
-  const props = external ? { href, target: '_blank', rel: 'noopener noreferrer' } : { href };
-
-  return (
-    <a {...props} onClick={onClick} className="flex items-center gap-3 px-[6vw] py-3 text-navy hover:bg-line/20">
+  const content = (
+    <>
       <span className="w-6 flex-shrink-0 text-center text-lg">{icon}</span>
       <span className="flex-1 text-base font-semibold">{label}</span>
       {chevron && <span className="text-muted">›</span>}
-    </a>
+    </>
+  );
+
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" onClick={onClick} className="flex items-center gap-3 px-[6vw] py-3 text-navy hover:bg-line/20">
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} onClick={onClick} className="flex items-center gap-3 px-[6vw] py-3 text-navy hover:bg-line/20">
+      {content}
+    </Link>
   );
 }
 
