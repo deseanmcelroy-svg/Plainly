@@ -15,20 +15,10 @@ export default function PageTransition({ children }: { children: React.ReactNode
     const t = setTimeout(() => {
       setDisplayChildren(children);
       setStage('in');
-    }, FADE_MS); // matches the CSS transition duration below exactly, so the
-    // swap only happens once the old content has FULLY faded to 0 — this is
-    // what was causing the flash: the swap was firing before the fade-out
-    // finished, so new content appeared while the old one was still
-    // mid-transition instead of fully invisible.
+    }, FADE_MS);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
-
-  // Keep content in sync if it changes without a route change (e.g. same-page state updates)
-  useEffect(() => {
-    if (stage === 'in') setDisplayChildren(children);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children]);
 
   return (
     <div
