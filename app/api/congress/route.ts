@@ -79,7 +79,7 @@ async function getDistrictForZip(zip: string): Promise<number | null> {
   if (!zip || !/^\d{5}$/.test(zip)) return null;
   try {
     const centroidUrl = `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/4/query?where=ZCTA5='${zip}'&outFields=CENTLAT,CENTLON&f=json`;
-    const centroidRes = await fetch(centroidUrl, { next: { revalidate: 2592000 } }); // 30 days, ZIP boundaries barely change
+    const centroidRes = await fetch(centroidUrl, { next: { revalidate: 2592000 } });
     const centroidData = await centroidRes.json();
     const lat = centroidData.features?.[0]?.attributes?.CENTLAT;
     const lon = centroidData.features?.[0]?.attributes?.CENTLON;
@@ -98,9 +98,6 @@ async function getDistrictForZip(zip: string): Promise<number | null> {
   }
 }
 
-// Single pass: fetch each recent vote's member-data once, and from that one
-// fetch derive this member's position on EVERY vote (not just yes), so the
-// frontend can offer a real YES/NO filter, plus their attendance rate.
 async function getHouseVoteData(bioguideId: string, limit = 30) {
   const listData = await fetchCongress(`/house-vote/${CURRENT_CONGRESS}/${CURRENT_SESSION}`, 900);
   const allVotes: any[] = listData.houseRollCallVotes || [];
@@ -153,9 +150,6 @@ async function getHouseVoteData(bioguideId: string, limit = 30) {
     found.push(...(batchResults.filter(Boolean) as { position: string; vote: any }[]));
   }
 
-  // Return every vote the member actually cast (Yea or Nay), so the client
-  // can filter either direction. "Present" and "Not Voting" are excluded
-  // from the list itself but still count toward attendance below.
   const allCastVotes = found
     .filter((r) => r.position.toLowerCase().includes('aye') || r.position.toLowerCase().includes('nay'))
     .map((r) => r.vote)
@@ -224,6 +218,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    if (type === 'debug-raw-fec-candidates') {
+      const office = searchParams.get('office') || 'H';
+      const state = searchParams.get('state') || 'OH';
+      const district = searchParams.get('district') || '02';
+      const cycle = searchParams.get('cycle') || '2026';
+      const FEC_KEY = process.env.FEC_API_KEY;
+      if (!FEC_KEY) return NextResponse.json({ error: 'FEC_API_KEY not set' }, { status: 503 });
+      const params = new URLSearchParams({ office, state, cycle, api_key: FEC_KEY });
+      if (office === 'H') params.set('district', district);
+      const url = `https://api.open.fec.gov/v1/candidates/?${params.toString()}`;
+      const res = await fetch(url);
+      const raw = await res.json();
+      return NextResponse.json({ requestedUrl: url.replace(FEC_KEY, 'REDACTED'), status: res.status, raw });
+    }
+
     if (type === 'members') {
       const zip = extractZip(location);
       const { state, stateCode } = getStateFromZip(zip);
@@ -265,8 +274,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Fallback lookup for bookmarked/shared rep links that arrive with no
-    // query-string context (name, party, photo, district, next election).
     if (type === 'member-info' && memberId) {
       const data = await fetchCongress(`/member/${memberId}`, 21600);
       const m = data.member;
@@ -360,4 +367,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: e.message || 'Failed' }, { status: 500 });
   }
 }
-
