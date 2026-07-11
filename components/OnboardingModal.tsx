@@ -55,6 +55,14 @@ const STEPS = [
     color: '#5B8C7B',
   },
   {
+    emoji: '🧑‍💼',
+    title: 'Your representatives',
+    description:
+      'See the House member and senators representing your ZIP code, what they have voted for in plain English, their background in office, and who is challenging them this election.',
+    cta: 'Got it',
+    color: '#1A2B3D',
+  },
+  {
     emoji: '✅',
     title: 'Voter checklist',
     description:
