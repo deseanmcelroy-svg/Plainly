@@ -126,8 +126,7 @@ export default function GovernmentPage() {
           Your <span className="text-terracotta">representatives</span>
         </h1>
         <p className="mx-auto mt-4 max-w-[520px] text-lg text-muted">
-          The people elected to represent you in Congress — what they've voted for, what it means for you, and when
-          you'll next get a say.
+          The people elected to represent you in Congress — the bills they've voted for and what those mean for you, their background in office, and who's running to replace them when you next get a say.
         </p>
       </section>
 
