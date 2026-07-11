@@ -54,6 +54,15 @@ function ordinal(n: number): string {
   return `${n}th`;
 }
 
+function ordinalSuffix(n: number): string {
+  const j = n % 10;
+  const k = n % 100;
+  if (j === 1 && k !== 11) return 'st';
+  if (j === 2 && k !== 12) return 'nd';
+  if (j === 3 && k !== 13) return 'rd';
+  return 'th';
+}
+
 const PARTY: Record<string, { pillBg: string; pillText: string; gradient: string }> = {
   Republican: { pillBg: 'rgba(217,102,62,0.25)', pillText: '#FAECE7', gradient: 'linear-gradient(135deg,#D9663E,#c25530)' },
   Democratic: { pillBg: 'rgba(91,143,217,0.25)', pillText: '#E6F1FB', gradient: 'linear-gradient(135deg,#5B8FD9,#4577c2)' },
@@ -268,7 +277,7 @@ function MemberDetailContent() {
                 </div>
                 <div className="mt-0.5 text-xs text-cream/60">
                   {isHouse
-                    ? `${repState || 'Their state'}'s ${repDistrict}${ordinal(Number(repDistrict))} District`
+                    ? `${repState || 'Their state'}'s ${repDistrict}${ordinalSuffix(Number(repDistrict))} District`
                     : `United States Senate${repState ? ` · ${repState}` : ''}`}
                 </div>
                 {repParty && (

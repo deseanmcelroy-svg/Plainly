@@ -249,12 +249,37 @@ function normalizeParty(partyFull: string): string {
 // candidates as if they were current. `election_years` is the field that
 // actually reflects which specific elections a candidate is/was on the
 // ballot for, so that's what determines inclusion here.
+const STATE_NAME_TO_CODE: Record<string, string> = {
+  alabama: 'AL', alaska: 'AK', arizona: 'AZ', arkansas: 'AR', california: 'CA',
+  colorado: 'CO', connecticut: 'CT', delaware: 'DE', florida: 'FL', georgia: 'GA',
+  hawaii: 'HI', idaho: 'ID', illinois: 'IL', indiana: 'IN', iowa: 'IA',
+  kansas: 'KS', kentucky: 'KY', louisiana: 'LA', maine: 'ME', maryland: 'MD',
+  massachusetts: 'MA', michigan: 'MI', minnesota: 'MN', mississippi: 'MS', missouri: 'MO',
+  montana: 'MT', nebraska: 'NE', nevada: 'NV', 'new hampshire': 'NH', 'new jersey': 'NJ',
+  'new mexico': 'NM', 'new york': 'NY', 'north carolina': 'NC', 'north dakota': 'ND', ohio: 'OH',
+  oklahoma: 'OK', oregon: 'OR', pennsylvania: 'PA', 'rhode island': 'RI', 'south carolina': 'SC',
+  'south dakota': 'SD', tennessee: 'TN', texas: 'TX', utah: 'UT', vermont: 'VT',
+  virginia: 'VA', washington: 'WA', 'west virginia': 'WV', wisconsin: 'WI', wyoming: 'WY',
+  'district of columbia': 'DC', 'puerto rico': 'PR',
+};
+
+// FEC's API requires the 2-letter postal code — Congress.gov's member list
+// endpoint returns the full state name (e.g. "Ohio"), which was silently
+// producing zero FEC matches with no error, since FEC just returns an empty
+// result set for an unrecognized state value rather than erroring.
+function toStateCode(state: string): string {
+  if (!state) return state;
+  if (state.length === 2) return state.toUpperCase();
+  return STATE_NAME_TO_CODE[state.toLowerCase()] || state;
+}
+
 async function getCandidatesForRace(chamber: string, state: string, district: string, cycle: number) {
   const FEC_KEY = process.env.FEC_API_KEY;
   if (!FEC_KEY) return { candidates: [], electionDate: getElectionDay(cycle) };
 
+  const stateCode = toStateCode(state);
   const office = chamber.includes('Senate') ? 'S' : 'H';
-  const params = new URLSearchParams({ office, state, cycle: String(cycle), api_key: FEC_KEY, per_page: '100' });
+  const params = new URLSearchParams({ office, state: stateCode, cycle: String(cycle), api_key: FEC_KEY, per_page: '100' });
   if (office === 'H' && district) {
     params.set('district', district.padStart(2, '0'));
   }
