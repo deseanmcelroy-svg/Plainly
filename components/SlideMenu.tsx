@@ -78,11 +78,9 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
         }}
       >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-line px-[6vw] py-6">
+        <div className="flex items-start justify-between border-b border-line px-5 py-6">
           <div className="flex items-center gap-3 flex-1 mr-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green">
-              <LogoMark />
-            </div>
+            <LogoMark size={40} />
             <div className="flex-1 min-w-0">
               {user ? (
                 <>
