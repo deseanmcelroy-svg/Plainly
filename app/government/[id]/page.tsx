@@ -425,7 +425,8 @@ function MemberDetailContent() {
         ) : (
           <>
             {!isActivity && (
-              <div className="mb-4 grid grid-cols-3 gap-2.5">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted">Bill voting history</p>
+            <div className="mb-4 grid grid-cols-3 gap-2.5">
                 {billsCount !== null && (
                   <div className="rounded-2xl bg-card p-3 text-center shadow-sm">
                     <div className="font-display text-xl font-bold text-terracotta">{billsCount}</div>
