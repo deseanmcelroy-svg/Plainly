@@ -365,6 +365,10 @@ export async function GET(request: NextRequest) {
         state: stateCode,
         districtMatched,
         resolvedDistrict: district,
+        _debugTotalFetched: allMembers.length,
+        _debugStateMatches: stateMatches.length,
+        _debugHouseMatches: houseMatches.length,
+        _debugSenateMatches: senateMatches.length,
       });
     }
 
@@ -463,4 +467,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: e.message || 'Failed' }, { status: 500 });
   }
 }
-
