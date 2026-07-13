@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
+import { useHouseholdProfile } from '@/lib/householdProfile';
+import type { HouseholdProfile } from '@/lib/types';
 
 interface SlideMenuProps {
   open: boolean;
@@ -14,9 +16,28 @@ interface ProfileData {
   election_reminders_enabled: boolean;
 }
 
+function getProfileSummary(profile: HouseholdProfile): string | null {
+  const bits: string[] = [];
+  if (profile.age_range) bits.push(` year old`);
+  if (profile.housing_status === 'own') bits.push('homeowner');
+  if (profile.housing_status === 'rent') bits.push('renter');
+  const incomeLabels: Record<string, string> = {
+    under_40k: 'under $40K income',
+    '40k_80k': '$40K2013$80K income',
+    '80k_120k': '$80K2013$120K income',
+    '120k_plus': '$120K+ income',
+  };
+  if (profile.household_income_range) bits.push(incomeLabels[profile.household_income_range]);
+  if (profile.has_school_age_kids) bits.push('school-age kids');
+  if (bits.length === 0) return null;
+  return `Viewing voting measures for a .`;
+}
+
 export default function SlideMenu({ open, onClose }: SlideMenuProps) {
   const { user, signOut } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
+  const { profile } = useHouseholdProfile();
+  const profileSummary = getProfileSummary(profile);
   const [reminders, setReminders] = useState(false);
 
   useEffect(() => {
@@ -67,6 +88,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
               {user ? (
                 <>
                   <p className="text-sm font-bold text-navy truncate">{user.email}</p>
+                {profileSummary && <p className="text-xs text-muted mt-0.5">{profileSummary}</p>}
                   <button
                     onClick={() => {
                       signOut();
@@ -80,7 +102,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
               ) : (
                 <>
                   <p className="text-sm font-bold text-navy">Welcome to Plainly</p>
-                  <p className="text-xs text-muted">Your preferences save automatically on this device</p>
+                  <p className="text-xs text-muted">{profileSummary ?? 'Your preferences save automatically on this device'}</p>
                 </>
               )}
             </div>
