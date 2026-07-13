@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useHouseholdProfile } from '@/lib/householdProfile';
 import Hero from '@/components/Hero';
 import BallotSummary from '@/components/BallotSummary';
 import ElectionCalendar from '@/components/ElectionCalendar';
@@ -15,6 +16,7 @@ import WaitlistForm, { isWaitlistDone } from '@/components/WaitlistForm';
 
 export default function Home() {
   const { user } = useAuth();
+  const { profile } = useHouseholdProfile();
   const [ballot, setBallot] = useState<LocationBallot | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,12 @@ export default function Home() {
   // For signed-in users with a saved location, look it up automatically
   useEffect(() => {
     setWaitlistDone(isWaitlistDone());
-    if (!user || ballot) return;
+    if (ballot) return;
+    if (profile.zip_code) {
+      lookup(profile.zip_code);
+      return;
+    }
+    if (!user) return;
     fetch('/api/profile')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -69,7 +76,7 @@ export default function Home() {
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, profile.zip_code]);
 
   return (
     <main>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import { useHouseholdProfile } from '@/lib/householdProfile';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
@@ -40,6 +41,7 @@ export default function WordAroundTownPage() {
 function WordAroundTownContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
+  const { profile } = useHouseholdProfile();
   const [location, setLocation] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [stats, setStats] = useState<CommunityStat[]>([]);
@@ -53,14 +55,16 @@ function WordAroundTownContent() {
     if (loc) {
       setInputValue(loc);
       loadStats(loc);
-    } else if (user) {
+    } else if (profile.zip_code) {
+        setInputValue(profile.zip_code);
+} else if (user) {
       fetch('/api/profile')
         .then((r) => (r.ok ? r.json() : null))
         .then((p) => { if (p?.saved_location) setInputValue(p.saved_location); })
         .catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [profile.zip_code]);
 
   async function loadStats(loc: string) {
     setLoading(true);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useHouseholdProfile } from '@/lib/householdProfile';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/auth';
@@ -41,6 +42,7 @@ export default function PracticeBallotPage() {
   const { user } = useAuth();
   const { profile, loaded: profileLoaded } = useHouseholdProfile();
   const profileHasData = profileLoaded && hasProfileData(profile);
+  const { profile } = useHouseholdProfile();
   const [location, setLocation] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [ballot, setBallot] = useState<LocationBallot | null>(null);
@@ -54,12 +56,16 @@ export default function PracticeBallotPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showRatePrompt, setShowRatePrompt] = useState(false);
   useEffect(() => {
+    if (profile.zip_code) {
+      setInputValue(profile.zip_code);
+      return;
+    }
     if (!user) return;
     fetch('/api/profile')
       .then((r) => (r.ok ? r.json() : null))
       .then((p) => { if (p?.saved_location) setInputValue(p.saved_location); })
       .catch(() => {});
-  }, [user]);
+  }, [user, profile.zip_code]);
 
   async function loadBallot(loc: string) {
     setLoading(true);
