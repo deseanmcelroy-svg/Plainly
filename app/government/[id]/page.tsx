@@ -379,7 +379,7 @@ function MemberDetailContent() {
 
         {candidates.filter((c) => c.role !== 'Incumbent').length > 0 && (
           <div className="mb-4 rounded-2xl bg-card p-4 shadow-sm">
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted">Who's on the ballot</p>
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted">Who is running against your representative</p>
             <div className="flex flex-col gap-2">
               {candidates
                 .filter((c) => c.role !== 'Incumbent')
