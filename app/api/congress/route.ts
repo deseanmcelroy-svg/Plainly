@@ -22,8 +22,12 @@ async function getAllCurrentMembers(): Promise<any[]> {
   for (let i = 0; i < 5; i++) {
     const data = await fetchCongress(`/member?currentMember=true&offset=${offset}`, 21600);
     const page: any[] = data.members || [];
+    if (page.length === 0) break; // only stop on a genuinely empty page —
+    // Congress.gov doesn't guarantee every page is exactly full even when
+    // more results exist, so a partial page is NOT a reliable end-of-data
+    // signal (this was the actual bug: a 249-item first page was wrongly
+    // treated as "that's everything," cutting off all Senate results).
     all.push(...page);
-    if (page.length < 250) break;
     offset += 250;
   }
   return all;
@@ -365,10 +369,6 @@ export async function GET(request: NextRequest) {
         state: stateCode,
         districtMatched,
         resolvedDistrict: district,
-        _debugTotalFetched: allMembers.length,
-        _debugStateMatches: stateMatches.length,
-        _debugHouseMatches: houseMatches.length,
-        _debugSenateMatches: senateMatches.length,
       });
     }
 
