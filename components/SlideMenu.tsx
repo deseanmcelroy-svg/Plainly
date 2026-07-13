@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
 import { useHouseholdProfile } from '@/lib/householdProfile';
+import LogoMark from '@/components/LogoMark';
 import type { HouseholdProfile } from '@/lib/types';
 
 interface SlideMenuProps {
@@ -18,19 +19,19 @@ interface ProfileData {
 
 function getProfileSummary(profile: HouseholdProfile): string | null {
   const bits: string[] = [];
-  if (profile.age_range) bits.push(` year old`);
+  if (profile.age_range) bits.push(`${profile.age_range} year old`);
   if (profile.housing_status === 'own') bits.push('homeowner');
   if (profile.housing_status === 'rent') bits.push('renter');
   const incomeLabels: Record<string, string> = {
     under_40k: 'under $40K income',
-    '40k_80k': '$40K2013$80K income',
-    '80k_120k': '$80K2013$120K income',
+    '40k_80k': '$40K\u2013$80K income',
+    '80k_120k': '$80K\u2013$120K income',
     '120k_plus': '$120K+ income',
   };
   if (profile.household_income_range) bits.push(incomeLabels[profile.household_income_range]);
   if (profile.has_school_age_kids) bits.push('school-age kids');
   if (bits.length === 0) return null;
-  return `Viewing voting measures for a .`;
+  return `Viewing voting measures for a ${bits.join(', ')}.`;
 }
 
 export default function SlideMenu({ open, onClose }: SlideMenuProps) {
@@ -80,9 +81,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
         <div className="flex items-start justify-between border-b border-line px-[6vw] py-6">
           <div className="flex items-center gap-3 flex-1 mr-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green">
-              <span className="text-base font-bold text-cream">
-                {user ? user.email?.[0]?.toUpperCase() || 'U' : 'G'}
-              </span>
+              <LogoMark />
             </div>
             <div className="flex-1 min-w-0">
               {user ? (
