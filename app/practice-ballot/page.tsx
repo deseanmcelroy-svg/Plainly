@@ -5,7 +5,6 @@ import { useHouseholdProfile } from '@/lib/householdProfile';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/auth';
-import { useHouseholdProfile } from '@/lib/householdProfile';
 import { estimateImpact, hasProfileData, buildPracticeImpactSynopsis } from '@/lib/impactEstimate';
 import { BallotItem, HouseholdProfile, LocationBallot } from '@/lib/types';
 import RatePrompt, { shouldShowRatePrompt } from '@/components/RatePrompt';
@@ -42,7 +41,6 @@ export default function PracticeBallotPage() {
   const { user } = useAuth();
   const { profile, loaded: profileLoaded } = useHouseholdProfile();
   const profileHasData = profileLoaded && hasProfileData(profile);
-  const { profile } = useHouseholdProfile();
   const [location, setLocation] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [ballot, setBallot] = useState<LocationBallot | null>(null);
