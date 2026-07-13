@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useHouseholdProfile } from '@/lib/householdProfile';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 
@@ -43,6 +44,7 @@ const PLACEHOLDER_EMOJI = {
 };
 
 export default function NewsPage() {
+  const { profile } = useHouseholdProfile();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'local' | 'state' | 'national'>('all');
@@ -51,7 +53,7 @@ export default function NewsPage() {
   useEffect(() => {
     let loc = '';
     try {
-      loc = localStorage.getItem('plainly-location') || '';
+      loc = profile.zip_code || '';
     } catch {}
     setLocation(loc);
     fetch(`/api/news?location=${encodeURIComponent(loc)}`)

@@ -211,6 +211,7 @@ export function hasProfileData(profile: HouseholdProfile): boolean {
 }
 
 export const EMPTY_PROFILE: HouseholdProfile = {
+  zip_code: null,
   age_range: null,
   housing_status: null,
   home_value_range: null,

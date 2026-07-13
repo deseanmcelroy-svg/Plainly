@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
+import { useHouseholdProfile } from '@/lib/householdProfile';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Footer from '@/components/Footer';
 
@@ -46,6 +47,7 @@ function AllBillsContent() {
   const chamber = searchParams.get('chamber') || '';
   const isActivityChamber = chamber.includes('Senate');
 
+  const { profile } = useHouseholdProfile();
   const [items, setItems] = useState<VoteOrActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -58,7 +60,7 @@ function AllBillsContent() {
 
   useEffect(() => {
     try {
-      setLocation(localStorage.getItem('plainly-location') || '');
+      setLocation(profile.zip_code || '');
     } catch {}
     fetch(`/api/congress?type=votes&memberId=${memberId}&chamber=${encodeURIComponent(chamber)}`)
       .then((r) => r.json())

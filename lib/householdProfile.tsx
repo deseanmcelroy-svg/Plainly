@@ -28,7 +28,8 @@ export function HouseholdProfileProvider({ children }: { children: React.ReactNo
       if (saved) {
         const parsed = JSON.parse(saved);
         setProfileState({
-          age_range: parsed.age_range ?? null,
+          zip_code: parsed.zip_code ?? null,
+            age_range: parsed.age_range ?? null,
           housing_status: parsed.housing_status ?? null,
           home_value_range: parsed.home_value_range ?? null,
           household_income_range: parsed.household_income_range ?? null,

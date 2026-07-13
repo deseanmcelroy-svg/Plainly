@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
+import { useHouseholdProfile } from '@/lib/householdProfile';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Footer from '@/components/Footer';
 
@@ -116,6 +117,7 @@ function MemberDetailContent() {
   const searchParams = useSearchParams();
   const memberId = params.id as string;
 
+  const { profile } = useHouseholdProfile();
   const [chamber, setChamber] = useState(searchParams.get('chamber') || '');
   const [repName, setRepName] = useState(searchParams.get('name') || '');
   const [repParty, setRepParty] = useState(searchParams.get('party') || '');
@@ -193,7 +195,7 @@ function MemberDetailContent() {
   useEffect(() => {
     if (!chamber) return;
     try {
-      setLocation(localStorage.getItem('plainly-location') || '');
+      setLocation(profile.zip_code || '');
     } catch {}
 
     setLoading(true);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
+import { useHouseholdProfile } from '@/lib/householdProfile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Footer from '@/components/Footer';
 
@@ -37,6 +38,7 @@ const PLACEHOLDER_EMOJI = {
 function NewsDetailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { profile } = useHouseholdProfile();
   const [article, setArticle] = useState<Article | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,7 +50,7 @@ function NewsDetailContent() {
         const parsed: Article = JSON.parse(decodeURIComponent(data));
         setArticle(parsed);
         let loc = '';
-        try { loc = localStorage.getItem('plainly-location') || ''; } catch {}
+        loc = profile.zip_code || '';
         fetch('/api/news-summary', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -44,6 +44,7 @@ export default function ProfilePage() {
 
   function clearAll() {
     save({
+      zip_code: null,
       age_range: null,
       housing_status: null,
       home_value_range: null,
@@ -57,13 +58,10 @@ export default function ProfilePage() {
       <div className="mx-auto max-w-[640px] px-[6vw] pb-16 pt-6">
         <div className="text-center">
           <h1 className="font-display text-[clamp(2rem,5vw,2.6rem)] font-bold tracking-tight">
-            About your household
+            Your profile
           </h1>
           <p className="mx-auto mt-3 max-w-[480px] text-base text-muted">
-            Completely optional. When you view a local tax measure or levy,
-            we&apos;ll use these broad ranges to show a rough estimate of
-            what it might mean for a household like yours — never an exact
-            figure, and never shared.
+            Fill this out once, and Plainly uses it everywhere — your ballot, your representatives, and estimated impacts of local measures are all centered around it. Completely optional, and never shared.
           </p>
         </div>
 
@@ -71,6 +69,19 @@ export default function ProfilePage() {
 
         {loaded && (
           <div className="mt-8 flex flex-col gap-7">
+        <Field label="ZIP code">
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            value={profile.zip_code ?? ''}
+            onChange={(e) => save({ zip_code: e.target.value.replace(/[^0-9]/g, '') })}
+            placeholder="Enter your ZIP code"
+            className="w-full max-w-[200px] rounded-xl border-2 border-line bg-card px-4 py-2.5 text-sm text-navy focus:border-navy focus:outline-none"
+          />
+          <p className="mt-2 text-xs text-muted">Determines your ballot, representatives, and local content throughout the app.</p>
+        </Field>
+
             <Field label="Age range">
               <OptionGrid
                 options={AGE_OPTIONS}

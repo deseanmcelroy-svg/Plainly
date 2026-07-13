@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useHouseholdProfile } from '@/lib/householdProfile';
 import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
 
@@ -55,6 +56,7 @@ function initials(name: string): string {
 
 export default function GovernmentPage() {
   const router = useRouter();
+  const { profile, setProfile } = useHouseholdProfile();
   const [location, setLocation] = useState('');
   const [zipInput, setZipInput] = useState('');
   const [members, setMembers] = useState<Member[]>([]);
@@ -65,7 +67,7 @@ export default function GovernmentPage() {
   useEffect(() => {
     let loc = '';
     try {
-      loc = localStorage.getItem('plainly-location') || '';
+      loc = profile.zip_code || '';
     } catch {}
     setLocation(loc);
     loadMembers(loc);
@@ -94,7 +96,7 @@ export default function GovernmentPage() {
     e.preventDefault();
     if (!zipInput.trim()) return;
     try {
-      localStorage.setItem('plainly-location', zipInput.trim());
+      setProfile({ ...profile, zip_code: zipInput.trim() });
     } catch {}
     setLocation(zipInput.trim());
     loadMembers(zipInput.trim());

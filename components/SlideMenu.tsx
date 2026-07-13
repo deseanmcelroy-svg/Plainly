@@ -114,7 +114,7 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
           </MenuSection>
 
           <MenuSection label="Settings">
-            <MenuLink href="/profile" icon="🏠" label="About your household" onClick={onClose} chevron />
+            <MenuLink href="/profile" icon="🏠" label="My Profile" onClick={onClose} chevron />
             <ToggleRow icon="🌙" label="Dark mode" checked={darkMode} onChange={() => toggleDarkMode()} />
             {user && (
               <ToggleRow

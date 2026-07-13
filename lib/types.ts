@@ -152,6 +152,7 @@ export type HomeValueRange = 'under_150k' | '150k_300k' | '300k_500k' | '500k_pl
 export type IncomeRange = 'under_40k' | '40k_80k' | '80k_120k' | '120k_plus';
 
 export interface HouseholdProfile {
+  zip_code: string | null;
   age_range: AgeRange | null;
   housing_status: HousingStatus | null;
   home_value_range: HomeValueRange | null;
