@@ -71,3 +71,16 @@ body {
   border-radius: 9999px;
   transition: transform 0.2s;
 }
+
+/* Prevent iOS Safari from zooming in when a text input is focused.
+   iOS auto-zooms any input/textarea/select rendered under 16px font-size —
+   several inputs in this app (ZIP search boxes, etc.) use Tailwind's
+   text-sm (14px), which triggers it. Scoped to mobile widths only, so
+   desktop sizing is untouched. */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
