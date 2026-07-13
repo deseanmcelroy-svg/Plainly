@@ -425,6 +425,7 @@ function MemberDetailContent() {
         ) : (
           <>
             {!isActivity && (
+              <>
               <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted">Bill voting history</p>
             <div className="mb-4 grid grid-cols-3 gap-2.5">
                 {billsCount !== null && (
@@ -449,6 +450,7 @@ function MemberDetailContent() {
                   </div>
                 )}
               </div>
+            </>
             )}
 
             <div className="mb-2 flex items-center justify-between">
