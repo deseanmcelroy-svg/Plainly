@@ -80,12 +80,6 @@ export default function Home() {
     <main>
       {/* Hero */}
       <div style={{ background: '#1A2B3D', padding: '28px 6vw 26px', position: 'relative', overflow: 'hidden' }}>
-        <svg width="220" height="220" viewBox="0 0 220 220" style={{ position: 'absolute', top: -10, right: -40, opacity: 0.07 }} aria-hidden="true">
-          <circle cx="110" cy="110" r="105" fill="none" stroke="#F7F4ED" strokeWidth="2" />
-          <circle cx="110" cy="110" r="75" fill="none" stroke="#F7F4ED" strokeWidth="2" />
-          <circle cx="110" cy="110" r="45" fill="none" stroke="#F7F4ED" strokeWidth="2" />
-        </svg>
-
         <div style={{ position: 'relative', maxWidth: 640, margin: '0 auto' }}>
           {displayZip ? (
             <>
