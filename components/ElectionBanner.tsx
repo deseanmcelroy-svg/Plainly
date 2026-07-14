@@ -91,7 +91,7 @@ export default function ElectionBanner() {
         </div>
 
         <a
-          href="/#vote"
+          href="/checklist"
           className="eb-cta"
           style={{
             backgroundColor: 'rgba(247,244,237,0.15)',

@@ -312,7 +312,7 @@ export default function PracticeBallotPage() {
                   Election Day you&apos;ll know exactly what to expect.
                 </p>
                 <Link
-                  href="/#vote"
+                  href="/checklist"
                   className="mt-4 inline-block rounded-xl bg-terracotta px-5 py-2.5 text-sm font-bold text-white"
                 >
                   Check your voter checklist &rarr;
