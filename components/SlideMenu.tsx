@@ -115,6 +115,8 @@ export default function SlideMenu({ open, onClose }: SlideMenuProps) {
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
+          <MenuLink href="/" icon="🧭" label="Home" onClick={onClose} />
+
           <MenuSection label="Your ballot">
             <MenuLink href="/#races" icon="🗳️" label="My ballot" onClick={onClose} />
             <MenuLink href="/practice-ballot" icon="📝" label="Practice ballot" onClick={onClose} chevron />
