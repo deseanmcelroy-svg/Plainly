@@ -29,21 +29,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   // Read saved preference (or system preference) on mount.
+  // Dark mode is temporarily disabled app-wide (contrast issues across
+  // several pages). This intentionally ignores any previously saved
+  // preference and self-corrects it back to light for existing users.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'dark') {
-        setDarkModeState(true);
-      } else if (saved === 'light') {
-        setDarkModeState(false);
-      } else if (false) {
-        setDarkModeState(true);
-      }
+      localStorage.setItem(STORAGE_KEY, 'light');
     } catch {
-      // localStorage unavailable (e.g. privacy mode) — default to light
-    } finally {
-      setHydrated(true);
+      // ignore
     }
+    setHydrated(true);
   }, []);
 
   // Apply the `dark` class to <html> whenever the value changes.

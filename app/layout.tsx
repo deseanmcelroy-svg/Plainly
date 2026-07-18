@@ -47,9 +47,7 @@ export const viewport = {
 // immediately and there's no flash of the wrong theme on page load.
 const themeInitScript = `
   try {
-    var saved = localStorage.getItem('plainly-theme');
-    var isDark = saved === 'dark';
-    if (isDark) document.documentElement.classList.add('dark');
+    localStorage.setItem('plainly-theme', 'light');
   } catch (e) {}
 `;
 
